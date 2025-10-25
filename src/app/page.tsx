@@ -45,8 +45,13 @@ export default function HomePage() {
 
   useEffect(() => {
     checkUser()
-    loadData()
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      loadData()
+    }
+  }, [user])
 
   const checkUser = async () => {
     try {
@@ -61,10 +66,14 @@ export default function HomePage() {
 
   const loadData = async () => {
     try {
+      // ユーザーID（デモの場合はdemo-user）
+      const userId = user?.id || 'demo-user'
+      
       // 固定予定を取得
       const { data: events } = await supabase
         .from('fixed_events')
         .select('*')
+        .eq('user_id', userId)
         .order('day_of_week', { ascending: true })
       
       if (events) {
@@ -75,6 +84,7 @@ export default function HomePage() {
       const { data: blocks } = await supabase
         .from('study_blocks')
         .select('*')
+        .eq('user_id', userId)
         .order('date', { ascending: true })
       
       if (blocks) {
@@ -85,6 +95,7 @@ export default function HomePage() {
       const { data: goals } = await supabase
         .from('learning_goals')
         .select('*')
+        .eq('user_id', userId)
         .limit(1)
         .single()
       
@@ -107,23 +118,53 @@ export default function HomePage() {
     )
   }
 
-  // 一時的にデモユーザーを使用（認証が完成するまで）
-  const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
+  // ユーザー情報（ログインしていない場合はデモユーザー）
+  const currentUser = user || { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
 
   if (!user) {
-
-
-    
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  こんにちは、{demoUser.user_metadata?.name || 'ユーザー'}さん
-                </h1>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center">
+              学習スケジュール管理
+            </h1>
+            <p className="text-gray-600 mb-8 text-center">
+              効率的に学習を進めましょう
+            </p>
+            <button
+              onClick={async () => {
+                try {
+                  const { error } = await supabase.auth.signInAnonymously()
+                  if (error) throw error
+                } catch (error) {
+                  console.error('Error signing in:', error)
+                  // エラーでもデモユーザーとして続行
+                }
+              }}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              始める
+            </button>
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              ※現在は匿名ログインです
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                こんにちは、{currentUser.user_metadata?.name || 'ユーザー'}さん
+              </h1>
                 <p className="text-gray-800 mt-2">
                   今日も効率的に学習を進めましょう
                 </p>
@@ -162,7 +203,7 @@ export default function HomePage() {
                       {/* Left Column - Calendar */}
                       <div className="lg:col-span-2">
                         <CalendarView
-                          userId={demoUser.id}
+                          userId={currentUser.id}
                           fixedEvents={demoFixedEvents}
                           studyBlocks={demoStudyBlocks}
                           onDateClick={(date) => {
@@ -306,7 +347,7 @@ export default function HomePage() {
               {/* Left Column - Today's Schedule */}
               <div className="lg:col-span-2 space-y-8">
                 <CountdownTimer
-                  userId={demoUser.id}
+                  userId={currentUser.id}
                   studyBlocks={demoStudyBlocks}
                   targets={countdownTargets}
                   setTargets={setCountdownTargets}
@@ -341,8 +382,8 @@ export default function HomePage() {
                     setCountdownTargets(prev => prev.filter(target => target.id !== targetId))
                   }}
                 />
-                <TodaySchedule userId={demoUser.id} />
-                <WeeklyProgress userId={demoUser.id} />
+                <TodaySchedule userId={currentUser.id} />
+                <WeeklyProgress userId={currentUser.id} />
               </div>
 
               {/* Right Column - Settings */}
@@ -353,7 +394,7 @@ export default function HomePage() {
                     {!showLearningGoalForm ? (
                   <>
                         <LearningGoalDisplay 
-                          userId={demoUser.id}
+                          userId={currentUser.id}
                           learningGoal={learningGoal}
                           onEdit={(goal) => {
                             if (goal) {
@@ -403,7 +444,7 @@ export default function HomePage() {
                                 .from('learning_goals')
                                 .insert({
                                   ...goalData,
-                                  user_id: demoUser.id
+                                  user_id: currentUser.id
                                 })
                                 .select()
                                 .single()
@@ -430,7 +471,7 @@ export default function HomePage() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">固定予定</h2>
                 <FixedEventList 
-                  userId={demoUser.id} 
+                  userId={currentUser.id} 
                   fixedEvents={demoFixedEvents} 
                   setFixedEvents={setDemoFixedEvents}
                   fixedEventExceptions={fixedEventExceptions}
@@ -474,7 +515,7 @@ export default function HomePage() {
                           const { data, error } = await supabase
                             .from('fixed_events')
                             .insert({
-                              user_id: 'demo-user',
+                              user_id: currentUser.id,
                               title: eventData.title,
                               day_of_week: eventData.day_of_week,
                               start_time: eventData.start_time,
@@ -643,100 +684,7 @@ export default function HomePage() {
                 </div>
               )}
 
-          {/* Setup Instructions */}
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-800 mb-4">
-              🚀 次のステップ: Supabaseの設定
-            </h3>
-            <div className="text-blue-700 space-y-2">
-              <p>1. Supabaseでアカウントを作成</p>
-              <p>2. 新しいプロジェクトを作成</p>
-              <p>3. プロジェクトのURLとAPIキーを取得</p>
-              <p>4. .env.localファイルを更新</p>
-              <p>5. データベースを初期化</p>
-            </div>
-          </div>
         </div>
       </div>
     )
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            こんにちは、{user.user_metadata?.name || 'ユーザー'}さん
-          </h1>
-          <p className="text-gray-600 mt-2">
-            今日も効率的に学習を進めましょう
-          </p>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Today's Schedule */}
-          <div className="lg:col-span-2 space-y-8">
-            <TodaySchedule userId={user.id} />
-            <WeeklyProgress userId={user.id} />
-          </div>
-
-          {/* Right Column - Settings */}
-          <div className="space-y-8">
-            {/* Learning Goal */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold mb-4">学習目標</h2>
-              <LearningGoalDisplay userId={user.id} />
-              {!showLearningGoalForm && (
-                <button 
-                  onClick={() => setShowLearningGoalForm(true)}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  学習目標を設定する
-                </button>
-              )}
-              {showLearningGoalForm && (
-                <div className="mt-4">
-                  <LearningGoalForm 
-                    onSubmit={async (goalData) => {
-                      console.log('学習目標を保存します:', goalData)
-                      setShowLearningGoalForm(false)
-                    }}
-                    onCancel={() => setShowLearningGoalForm(false)}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Fixed Events */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold mb-4">固定予定</h2>
-              <FixedEventList userId={user.id} />
-              {!showFixedEventForm && (
-                <button 
-                  onClick={() => setShowFixedEventForm(true)}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  予定を追加
-                </button>
-              )}
-              {showFixedEventForm && (
-                <div className="mt-4">
-                  <FixedEventForm 
-                    onSubmit={async (eventData) => {
-                      console.log('固定予定を保存します:', eventData)
-                      setShowFixedEventForm(false)
-                    }}
-                    onCancel={() => setShowFixedEventForm(false)}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  )
 }
