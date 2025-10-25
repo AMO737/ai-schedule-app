@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { FixedEvent, StudyBlock } from '@/types'
+import { EmailNotificationSettings } from './EmailNotificationSettings'
 
 interface NotificationSystemProps {
   fixedEvents: FixedEvent[]
@@ -27,6 +28,11 @@ export function NotificationSystem({
 }: NotificationSystemProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showEmailSettings, setShowEmailSettings] = useState(false)
+  const [emailSettings, setEmailSettings] = useState<{ enabled: boolean; email: string }>({ 
+    enabled: false, 
+    email: '' 
+  })
 
   // 通知を生成する関数
   const generateNotifications = () => {
@@ -87,10 +93,39 @@ export function NotificationSystem({
       // 既存の通知と新しい通知をマージ（重複を避ける）
       const existingIds = prev.map(n => n.id)
       const uniqueNewNotifications = newNotifications.filter(n => !existingIds.includes(n.id))
+      
+      // メール通知を送信（有効な場合）
+      if (emailSettings.enabled && emailSettings.email && uniqueNewNotifications.length > 0) {
+        sendEmailNotification(uniqueNewNotifications[0])
+      }
+      
       return [...prev, ...uniqueNewNotifications].sort((a, b) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
     })
+  }
+
+  // メール通知を送信
+  const sendEmailNotification = async (notification: NotificationItem) => {
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailSettings.email,
+          subject: notification.title,
+          message: `${notification.message}\n\n時間: ${notification.time}\n日付: ${notification.date}`
+        })
+      })
+      
+      if (response.ok) {
+        console.log('メール通知を送信しました:', notification.title)
+      }
+    } catch (error) {
+      console.error('メール送信エラー:', error)
+    }
   }
 
   // 定期的に通知をチェック（1分ごと）
@@ -156,8 +191,14 @@ export function NotificationSystem({
       {/* 通知ドロップダウン */}
       {showNotifications && (
         <div className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900">通知</h3>
+            <button
+              onClick={() => setShowEmailSettings(!showEmailSettings)}
+              className="text-xs text-blue-600 hover:text-blue-800"
+            >
+              メール設定
+            </button>
           </div>
           
           {notifications.length === 0 ? (
@@ -209,6 +250,15 @@ export function NotificationSystem({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          
+          {/* メール設定フォーム */}
+          {showEmailSettings && (
+            <div className="p-4 border-t border-gray-200">
+              <EmailNotificationSettings
+                onSettingsChange={setEmailSettings}
+              />
             </div>
           )}
         </div>
