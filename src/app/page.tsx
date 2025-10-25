@@ -23,23 +23,7 @@ export default function HomePage() {
   const [showFixedEventForm, setShowFixedEventForm] = useState(false)
   const [showLearningGoalForm, setShowLearningGoalForm] = useState(false)
   const [editingGoal, setEditingGoal] = useState<any>(null)
-  const [learningGoal, setLearningGoal] = useState({
-    id: 'demo-goal-1',
-    user_id: 'demo-user',
-    weekly_hours: 10,
-    block_duration: 30,
-    wake_up_time: '07:00',
-    sleep_time: '23:00',
-    break_duration: 5,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    subject_distribution: [
-      { subject: '英語', percentage: 40 },
-      { subject: '数学', percentage: 35 },
-      { subject: '国語', percentage: 25 }
-    ]
-  })
+  const [learningGoal, setLearningGoal] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showCountdownTargetForm, setShowCountdownTargetForm] = useState(false)
@@ -55,98 +39,9 @@ export default function HomePage() {
   
   console.log('page.tsx - showFixedEventForm:', showFixedEventForm)
   console.log('page.tsx - selectedDate:', selectedDate)
-  const [demoFixedEvents, setDemoFixedEvents] = useState([
-    {
-      id: 'demo-event-1',
-      user_id: 'demo-user',
-      title: '授業',
-      day_of_week: 1, // 月曜日
-      start_time: '09:00',
-      end_time: '10:30',
-      color: '#3B82F6',
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'demo-event-2',
-      user_id: 'demo-user',
-      title: 'バイト',
-      day_of_week: 3, // 水曜日
-      start_time: '18:00',
-      end_time: '22:00',
-      color: '#F59E0B',
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'demo-event-3',
-      user_id: 'demo-user',
-      title: 'サークル',
-      day_of_week: 5, // 金曜日
-      start_time: '16:00',
-      end_time: '18:00',
-      color: '#8B5CF6',
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ])
-  const [demoStudyBlocks, setDemoStudyBlocks] = useState([
-    {
-      id: 'demo-block-1',
-      user_id: 'demo-user',
-      subject: '英語',
-      date: new Date().toISOString().split('T')[0],
-      start_time: '07:00',
-      end_time: '07:30',
-      duration: 30,
-      color: '#10B981',
-      is_completed: true,
-      is_skipped: false,
-      hasAlarm: true,
-      completed_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'demo-block-2',
-      user_id: 'demo-user',
-      subject: '数学',
-      date: new Date().toISOString().split('T')[0],
-      start_time: '19:00',
-      end_time: '19:30',
-      duration: 30,
-      color: '#EF4444',
-      is_completed: false,
-      is_skipped: false,
-      hasAlarm: false,
-      completed_at: undefined,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ])
-  const [countdownTargets, setCountdownTargets] = useState([
-    {
-      id: 'demo-target-1',
-      title: '大学受験',
-      targetDate: '2024-03-15',
-      totalStudyHours: 200,
-      completedHours: 0,
-      subjects: ['英語', '数学', '国語'],
-      isActive: true
-    },
-    {
-      id: 'demo-target-2',
-      title: 'TOEIC試験',
-      targetDate: '2024-02-28',
-      totalStudyHours: 50,
-      completedHours: 0,
-      subjects: ['英語'],
-      isActive: true
-    }
-  ])
+  const [demoFixedEvents, setDemoFixedEvents] = useState<any[]>([])
+  const [demoStudyBlocks, setDemoStudyBlocks] = useState<any[]>([])
+  const [countdownTargets, setCountdownTargets] = useState<any[]>([])
 
   useEffect(() => {
     checkUser()
