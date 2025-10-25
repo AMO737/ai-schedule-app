@@ -6,12 +6,12 @@ import { StudyBlock } from '@/types'
 
 interface CountdownTarget {
   id: string
+  target_date: string
+  target_hours: number
+  completed_hours: number
   title: string
-  targetDate: string
-  totalStudyHours: number
-  completedHours: number
-  subjects: string[]
-  isActive: boolean
+  created_at: string
+  updated_at: string
 }
 
 interface CountdownTimerProps {
@@ -55,12 +55,9 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
       // ブロックが完了している
       if (!block.is_completed) return false
       
-      // 対象科目に含まれている
-      if (!target.subjects.includes(block.subject)) return false
-      
       // 目標日より前の日付
       const blockDate = new Date(block.date)
-      const targetDate = new Date(target.targetDate)
+      const targetDate = new Date(target.target_date)
       if (blockDate > targetDate) return false
       
       return true
@@ -96,7 +93,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
       
       // 変更があった場合のみ更新
       const hasChanges = updatedTargets.some((target, index) => 
-        target.completedHours !== currentTargets[index]?.completedHours
+        target.completed_hours !== currentTargets[index]?.completed_hours
       )
       
       if (hasChanges) {
@@ -114,7 +111,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
       currentTargets.forEach(target => {
         if (!target.isActive) return
         
-        const targetDate = new Date(target.targetDate)
+        const targetDate = new Date(target.target_date)
         const now = new Date()
         const diff = targetDate.getTime() - now.getTime()
         
@@ -146,17 +143,17 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
 
   // 進捗率計算
   const getProgressPercentage = (target: CountdownTarget) => {
-    return Math.min((target.completedHours / target.totalStudyHours) * 100, 100)
+    return Math.min((target.completed_hours / target.target_hours) * 100, 100)
   }
 
   // 残り時間計算
   const getRemainingHours = (target: CountdownTarget) => {
-    return Math.max(target.totalStudyHours - target.completedHours, 0)
+    return Math.max(target.target_hours - target.completed_hours, 0)
   }
 
   // 1日あたりの必要学習時間計算
   const getDailyRequiredHours = (target: CountdownTarget) => {
-    const targetDate = new Date(target.targetDate)
+    const targetDate = new Date(target.target_date)
     const now = new Date()
     const diffDays = Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     
@@ -299,7 +296,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
                       </div>
                     </div>
                     <div className="text-sm text-gray-800">
-                      目標日: {new Date(target.targetDate).toLocaleDateString('ja-JP')}
+                      目標日: {new Date(target.target_date).toLocaleDateString('ja-JP')}
                     </div>
                   </div>
                 </div>
@@ -309,7 +306,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-900">学習進捗</span>
                     <span className="text-sm text-gray-800">
-                      {target.completedHours.toFixed(1)}時間 / {target.totalStudyHours}時間
+                      {target.completed_hours.toFixed(1)}時間 / {target.target_hours}時間
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">

@@ -29,13 +29,13 @@ type ScheduleState = {
   addFixedEvent: (event: FixedEvent) => void
   updateFixedEvent: (id: string, event: Partial<FixedEvent>) => void
   removeFixedEvent: (id: string) => void
-  setFixedEvents: (events: FixedEvent[]) => void
+  setFixedEvents: (events: FixedEvent[] | ((prev: FixedEvent[]) => FixedEvent[])) => void
   
   // アクション - 学習ブロック
   addStudyBlock: (block: StudyBlock) => void
   updateStudyBlock: (id: string, block: Partial<StudyBlock>) => void
   removeStudyBlock: (id: string) => void
-  setStudyBlocks: (blocks: StudyBlock[]) => void
+  setStudyBlocks: (blocks: StudyBlock[] | ((prev: StudyBlock[]) => StudyBlock[])) => void
   
   // アクション - 学習目標
   setLearningGoal: (goal: LearningGoal | null) => void
@@ -44,12 +44,12 @@ type ScheduleState = {
   addCountdownTarget: (target: CountdownTarget) => void
   updateCountdownTarget: (id: string, target: Partial<CountdownTarget>) => void
   removeCountdownTarget: (id: string) => void
-  setCountdownTargets: (targets: CountdownTarget[]) => void
+  setCountdownTargets: (targets: CountdownTarget[] | ((prev: CountdownTarget[]) => CountdownTarget[])) => void
   
   // アクション - 固定予定例外
   addFixedEventException: (eventId: string, date: string) => void
   removeFixedEventException: (eventId: string, date: string) => void
-  setFixedEventExceptions: (exceptions: FixedEventExceptions) => void
+  setFixedEventExceptions: (exceptions: FixedEventExceptions | ((prev: FixedEventExceptions) => FixedEventExceptions)) => void
   
   // クリア
   clearAll: () => void
@@ -73,7 +73,13 @@ export const useScheduleStore = create<ScheduleState>()(
       removeFixedEvent: (id) => set((s) => ({
         fixedEvents: s.fixedEvents.filter(e => e.id !== id)
       })),
-      setFixedEvents: (events) => set({ fixedEvents: events }),
+      setFixedEvents: (events) => {
+        if (typeof events === 'function') {
+          set((s) => ({ fixedEvents: events(s.fixedEvents) }))
+        } else {
+          set({ fixedEvents: events })
+        }
+      },
       
       // 学習ブロック
       addStudyBlock: (block) => set((s) => ({ studyBlocks: [...s.studyBlocks, block] })),
@@ -83,7 +89,13 @@ export const useScheduleStore = create<ScheduleState>()(
       removeStudyBlock: (id) => set((s) => ({
         studyBlocks: s.studyBlocks.filter(b => b.id !== id)
       })),
-      setStudyBlocks: (blocks) => set({ studyBlocks: blocks }),
+      setStudyBlocks: (blocks) => {
+        if (typeof blocks === 'function') {
+          set((s) => ({ studyBlocks: blocks(s.studyBlocks) }))
+        } else {
+          set({ studyBlocks: blocks })
+        }
+      },
       
       // 学習目標
       setLearningGoal: (goal) => set({ learningGoal: goal }),
@@ -96,7 +108,13 @@ export const useScheduleStore = create<ScheduleState>()(
       removeCountdownTarget: (id) => set((s) => ({
         countdownTargets: s.countdownTargets.filter(t => t.id !== id)
       })),
-      setCountdownTargets: (targets) => set({ countdownTargets: targets }),
+      setCountdownTargets: (targets) => {
+        if (typeof targets === 'function') {
+          set((s) => ({ countdownTargets: targets(s.countdownTargets) }))
+        } else {
+          set({ countdownTargets: targets })
+        }
+      },
       
       // 固定予定例外
       addFixedEventException: (eventId, date) => set((s) => ({
@@ -114,7 +132,13 @@ export const useScheduleStore = create<ScheduleState>()(
           }
         }
       }),
-      setFixedEventExceptions: (exceptions) => set({ fixedEventExceptions: exceptions }),
+      setFixedEventExceptions: (exceptions) => {
+        if (typeof exceptions === 'function') {
+          set((s) => ({ fixedEventExceptions: exceptions(s.fixedEventExceptions) }))
+        } else {
+          set({ fixedEventExceptions: exceptions })
+        }
+      },
       
       // 全クリア
       clearAll: () => set({

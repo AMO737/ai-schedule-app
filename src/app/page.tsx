@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { SimpleStorage } from '@/lib/simple-storage'
+import { useScheduleStore, useHydrated } from '@/store/schedule'
 import { FixedEventForm } from '@/components/fixed-events/FixedEventForm'
 import { FixedEventList } from '@/components/fixed-events/FixedEventList'
 import { LearningGoalForm } from '@/components/learning-goals/LearningGoalForm'
@@ -19,12 +19,31 @@ import { Button } from '@/components/ui/button'
 import { NotificationSystem } from '@/components/notifications/NotificationSystem'
 
 export default function HomePage() {
+  // Zustandストアから状態を取得
+  const hydrated = useHydrated()
+  const fixedEvents = useScheduleStore(state => state.fixedEvents)
+  const studyBlocks = useScheduleStore(state => state.studyBlocks)
+  const learningGoal = useScheduleStore(state => state.learningGoal)
+  const countdownTargets = useScheduleStore(state => state.countdownTargets)
+  const fixedEventExceptions = useScheduleStore(state => state.fixedEventExceptions)
+  
+  // Zustandストアからアクションを取得
+  const setFixedEvents = useScheduleStore(state => state.setFixedEvents)
+  const setStudyBlocks = useScheduleStore(state => state.setStudyBlocks)
+  const setLearningGoalStore = useScheduleStore(state => state.setLearningGoal)
+  const setCountdownTargets = useScheduleStore(state => state.setCountdownTargets)
+  const setFixedEventExceptions = useScheduleStore(state => state.setFixedEventExceptions)
+  const removeStudyBlock = useScheduleStore(state => state.removeStudyBlock)
+  const removeFixedEvent = useScheduleStore(state => state.removeFixedEvent)
+  const clearAll = useScheduleStore(state => state.clearAll)
+  
+  // UIの状態管理
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showFixedEventForm, setShowFixedEventForm] = useState(false)
   const [showLearningGoalForm, setShowLearningGoalForm] = useState(false)
   const [editingGoal, setEditingGoal] = useState<any>(null)
-  const [learningGoal, setLearningGoal] = useState<any>(null)
+  const [learningGoalState, setLearningGoalState] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showCountdownTargetForm, setShowCountdownTargetForm] = useState(false)
@@ -34,80 +53,24 @@ export default function HomePage() {
   const [editingFixedEvent, setEditingFixedEvent] = useState<any>(null)
   const [selectedDateForForm, setSelectedDateForForm] = useState<Date | null>(null)
   const [showDailyTimeSchedule, setShowDailyTimeSchedule] = useState(false)
-  // 固定予定の例外削除を管理（日付文字列をキーとして使用）
-  const [fixedEventExceptions, setFixedEventExceptions] = useState<{ [key: string]: string[] | undefined }>({})
-  
   
   console.log('page.tsx - showFixedEventForm:', showFixedEventForm)
   console.log('page.tsx - selectedDate:', selectedDate)
-  const [demoFixedEvents, setDemoFixedEvents] = useState<any[]>([])
-  const [demoStudyBlocks, setDemoStudyBlocks] = useState<any[]>([])
-  const [countdownTargets, setCountdownTargets] = useState<any[]>([])
-
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   useEffect(() => {
     checkUser()
-    // ストレージからデータを読み込む
-    loadFromStorage()
-    // 初期読み込み完了後、フラグをリセット
-    setTimeout(() => setIsInitialLoad(false), 1000)
   }, [])
 
-  // SimpleStorageへの自動保存（データが変更されたとき、初期読み込み後のみ）
-  useEffect(() => {
-    if (!isInitialLoad) {
-      SimpleStorage.save('fixedEvents', demoFixedEvents)
-    }
-  }, [demoFixedEvents, isInitialLoad])
-
-  useEffect(() => {
-    if (!isInitialLoad) {
-      SimpleStorage.save('studyBlocks', demoStudyBlocks)
-    }
-  }, [demoStudyBlocks, isInitialLoad])
-
-  useEffect(() => {
-    if (!isInitialLoad) {
-      SimpleStorage.save('learningGoal', learningGoal)
-    }
-  }, [learningGoal, isInitialLoad])
-
-  useEffect(() => {
-    if (!isInitialLoad) {
-      SimpleStorage.save('countdownTargets', countdownTargets)
-    }
-  }, [countdownTargets, isInitialLoad])
-
-  useEffect(() => {
-    if (!isInitialLoad) {
-      SimpleStorage.save('fixedEventExceptions', fixedEventExceptions)
-    }
-  }, [fixedEventExceptions, isInitialLoad])
-
-  const loadFromStorage = () => {
-    console.log('=== データ読み込み開始 ===')
-    const fixedEvents = SimpleStorage.load('fixedEvents', [])
-    const studyBlocks = SimpleStorage.load('studyBlocks', [])
-    const learningGoal = SimpleStorage.load('learningGoal', null)
-    const countdownTargets = SimpleStorage.load('countdownTargets', [])
-    const exceptions = SimpleStorage.load('fixedEventExceptions', {})
-    
-    console.log('読み込んだデータ:')
-    console.log('- FixedEvents:', fixedEvents.length)
-    console.log('- StudyBlocks:', studyBlocks.length)
-    console.log('- LearningGoal:', learningGoal ? 'あり' : 'なし')
-    console.log('- CountdownTargets:', countdownTargets.length)
-    console.log('- Exceptions:', Object.keys(exceptions).length)
-    
-    // データがあれば設定
-    setDemoFixedEvents(fixedEvents)
-    setDemoStudyBlocks(studyBlocks)
-    if (learningGoal) setLearningGoal(learningGoal)
-    setCountdownTargets(countdownTargets)
-    setFixedEventExceptions(exceptions)
-    
-    console.log('=== データ読み込み完了 ===')
+  // Zustandストアのハイドレーション完了を待つ
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    )
   }
 
 
@@ -128,53 +91,7 @@ export default function HomePage() {
     }
   }
 
-  const loadData = async () => {
-    try {
-      // ユーザーID（デモの場合はdemo-user）
-      const userId = user?.id || 'demo-user'
-      
-      try {
-        // 固定予定を取得
-        const { data: events } = await supabase
-          .from('fixed_events')
-          .select('*')
-          .eq('user_id', userId)
-          .order('day_of_week', { ascending: true })
-        
-        if (events) {
-          setDemoFixedEvents(events)
-        }
 
-        // 学習ブロックを取得
-        const { data: blocks } = await supabase
-          .from('study_blocks')
-          .select('*')
-          .eq('user_id', userId)
-          .order('date', { ascending: true })
-        
-        if (blocks) {
-          setDemoStudyBlocks(blocks)
-        }
-
-        // 学習目標を取得
-        const { data: goals } = await supabase
-          .from('learning_goals')
-          .select('*')
-          .eq('user_id', userId)
-          .limit(1)
-          .single()
-        
-        if (goals) {
-          setLearningGoal(goals)
-        }
-      } catch (supabaseError) {
-        // Supabaseエラーは無視（デモモード）
-        console.log('Supabase not configured, using demo mode')
-      }
-    } catch (error) {
-      console.error('Error loading data:', error)
-    }
-  }
 
   if (loading) {
     return (
@@ -220,14 +137,8 @@ export default function HomePage() {
                 // デモユーザーとして続行（データは空）
                 const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
                 setUser(demoUser as any)
-                // データはリセット
-                setDemoFixedEvents([])
-                setDemoStudyBlocks([])
-                setCountdownTargets([])
-                setLearningGoal(null)
-                setFixedEventExceptions({})
-                // ストレージもクリア
-                SimpleStorage.clear()
+                // Zustandストアをクリア
+                clearAll()
               }}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
@@ -258,8 +169,8 @@ export default function HomePage() {
               </div>
               <div className="flex space-x-2">
                 <NotificationSystem
-                  fixedEvents={demoFixedEvents}
-                  studyBlocks={demoStudyBlocks}
+                  fixedEvents={fixedEvents}
+                  studyBlocks={studyBlocks}
                   fixedEventExceptions={fixedEventExceptions}
                 />
                 <button
@@ -291,8 +202,8 @@ export default function HomePage() {
                       <div className="lg:col-span-2">
                         <CalendarView
                           userId={currentUser.id}
-                          fixedEvents={demoFixedEvents}
-                          studyBlocks={demoStudyBlocks}
+                          fixedEvents={fixedEvents}
+                          studyBlocks={studyBlocks}
                           onDateClick={(date) => {
                             console.log('カレンダーで日付をクリック:', date)
                             setSelectedDate(date)
@@ -307,8 +218,8 @@ export default function HomePage() {
                       <div>
                         <DateDetail
                           selectedDate={selectedDate}
-                          fixedEvents={demoFixedEvents}
-                          studyBlocks={demoStudyBlocks}
+                          fixedEvents={fixedEvents}
+                          studyBlocks={studyBlocks}
                           onAddEvent={(date) => {
                             console.log('予定を追加します:', date)
                             console.log('showFixedEventForm before:', showFixedEventForm)
@@ -325,7 +236,7 @@ export default function HomePage() {
                           }}
                           onDeleteStudyBlock={(blockId) => {
                             console.log('学習ブロックを削除します:', blockId)
-                            setDemoStudyBlocks(prev => prev.filter(block => block.id !== blockId))
+                            removeStudyBlock(blockId)
                           }}
                           onEditStudyBlock={(block) => {
                             console.log('学習ブロックを編集します:', block)
@@ -365,8 +276,8 @@ export default function HomePage() {
                   {showDailyTimeSchedule && selectedDate && (
                     <DailyTimeSchedule
                       selectedDate={selectedDate}
-                      fixedEvents={demoFixedEvents}
-                      studyBlocks={demoStudyBlocks}
+                      fixedEvents={fixedEvents}
+                      studyBlocks={studyBlocks}
                       onAddEvent={(date) => {
                         console.log('予定を追加します:', date)
                         setSelectedDateForForm(date)
@@ -387,7 +298,7 @@ export default function HomePage() {
                       }}
                       onDeleteStudyBlock={(blockId) => {
                         console.log('学習ブロックを削除します:', blockId)
-                        setDemoStudyBlocks(prev => prev.filter(block => block.id !== blockId))
+                        removeStudyBlock(blockId)
                       }}
                       onEditFixedEvent={(event) => {
                         console.log('固定予定を編集します:', event)
@@ -424,7 +335,7 @@ export default function HomePage() {
                       }}
                       onAddStudyBlockFromTimeSchedule={(studyBlock) => {
                         console.log('タイムスケジュールから学習ブロックを追加:', studyBlock)
-                        setDemoStudyBlocks(prev => [...prev, studyBlock])
+                        setStudyBlocks([...studyBlocks, studyBlock])
                       }}
                     />
                   )}
@@ -435,7 +346,7 @@ export default function HomePage() {
               <div className="lg:col-span-2 space-y-8">
                 <CountdownTimer
                   userId={currentUser.id}
-                  studyBlocks={demoStudyBlocks}
+                  studyBlocks={studyBlocks}
                   targets={countdownTargets}
                   setTargets={setCountdownTargets}
                   onAddTarget={() => {
@@ -456,7 +367,6 @@ export default function HomePage() {
                     )
                     setCountdownTargets(updated)
                     // 即座にストレージに保存
-                    SimpleStorage.save('countdownTargets', updated)
                   }}
                   onAddNewTarget={(targetData) => {
                     console.log('メインページ: 新しいカウントダウン目標を追加します:', targetData)
@@ -468,14 +378,12 @@ export default function HomePage() {
                     const updated = [...countdownTargets, newTarget]
                     setCountdownTargets(updated)
                     // 即座にストレージに保存
-                    SimpleStorage.save('countdownTargets', updated)
                   }}
                   onDeleteTarget={(targetId) => {
                     console.log('メインページ: カウントダウン目標を削除します:', targetId)
                     const updated = countdownTargets.filter(target => target.id !== targetId)
                     setCountdownTargets(updated)
                     // 即座にストレージに保存
-                    SimpleStorage.save('countdownTargets', updated)
                   }}
                 />
                 <TodaySchedule userId={currentUser.id} />
@@ -530,9 +438,8 @@ export default function HomePage() {
                           }
                           
                           console.log('学習目標を設定:', newGoal)
-                          setLearningGoal(newGoal)
+                          setLearningGoalStore(newGoal)
                           // 即座にストレージに保存
-                          SimpleStorage.save('learningGoal', newGoal)
                           
                           setEditingGoal(null)
                           setShowLearningGoalForm(false)
@@ -553,8 +460,7 @@ export default function HomePage() {
                               
                               if (error) throw error
                               if (data) {
-                                setLearningGoal(data)
-                                SimpleStorage.save('learningGoal', data)
+                                setLearningGoalStore(data)
                               }
                             } else {
                               console.log('新規作成モード: 学習目標を追加します')
@@ -569,8 +475,7 @@ export default function HomePage() {
                               
                               if (error) throw error
                               if (data) {
-                                setLearningGoal(data)
-                                SimpleStorage.save('learningGoal', data)
+                                setLearningGoalStore(data)
                               }
                             }
                           } catch (error) {
@@ -592,8 +497,8 @@ export default function HomePage() {
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">固定予定</h2>
                 <FixedEventList 
                   userId={currentUser.id} 
-                  fixedEvents={demoFixedEvents} 
-                  setFixedEvents={setDemoFixedEvents}
+                  fixedEvents={fixedEvents} 
+                  setFixedEvents={setFixedEvents}
                   fixedEventExceptions={fixedEventExceptions}
                   onToggleFixedEventException={(eventId, dateStr) => {
                     console.log('固定予定の例外を切り替えます:', eventId, dateStr)
@@ -646,10 +551,9 @@ export default function HomePage() {
                           updated_at: new Date().toISOString()
                         }
                         
-                        const newFixedEvents = [...demoFixedEvents, newEvent]
-                        setDemoFixedEvents(newFixedEvents)
+                        const newFixedEvents = [...fixedEvents, newEvent]
+                        setFixedEvents(newFixedEvents)
                         // 即座にストレージに保存
-                        SimpleStorage.save('fixedEvents', newFixedEvents)
                         
                         setShowFixedEventForm(false)
                         
@@ -671,9 +575,8 @@ export default function HomePage() {
                           
                           if (error) throw error
                           if (data) {
-                            const newFixedEvents = [...demoFixedEvents, data]
-                            setDemoFixedEvents(newFixedEvents)
-                            SimpleStorage.save('fixedEvents', newFixedEvents)
+                            const newFixedEvents = [...fixedEvents, data]
+                            setFixedEvents(newFixedEvents)
                           }
                         } catch (error) {
                           console.error('Error saving fixed event:', error)
@@ -715,7 +618,9 @@ export default function HomePage() {
                           const newTarget = {
                             ...targetData,
                             id: `target-${Date.now()}`,
-                            completedHours: 0
+                            completed_hours: 0,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
                           }
                           setCountdownTargets(prev => [...prev, newTarget])
                         }
@@ -746,7 +651,7 @@ export default function HomePage() {
                         console.log('固定予定を保存します:', eventData)
                         if (editingFixedEvent) {
                           console.log('編集モード: 予定を更新します')
-                          setDemoFixedEvents(prev => prev.map(event => 
+                          setFixedEvents(prev => prev.map(event => 
                             event.id === editingFixedEvent.id 
                               ? { ...event, ...eventData, updated_at: new Date().toISOString() }
                               : event
@@ -760,7 +665,7 @@ export default function HomePage() {
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString()
                           }
-                          setDemoFixedEvents(prev => [...prev, newEvent])
+                          setFixedEvents(prev => [...prev, newEvent])
                         }
                         
                         setEditingFixedEvent(null)
@@ -794,7 +699,7 @@ export default function HomePage() {
                         if (editingStudyBlock) {
                           console.log('編集モード: ブロックを更新します')
                           // 編集の場合は更新処理
-                          setDemoStudyBlocks(prev => prev.map(block => 
+                          setStudyBlocks(prev => prev.map(block => 
                             block.id === editingStudyBlock.id 
                               ? { ...block, ...blockData, updated_at: new Date().toISOString() }
                               : block
@@ -809,7 +714,7 @@ export default function HomePage() {
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString()
                           }
-                          setDemoStudyBlocks(prev => [...prev, newBlock])
+                          setStudyBlocks(prev => [...prev, newBlock])
                         }
                         
                         setEditingStudyBlock(null)

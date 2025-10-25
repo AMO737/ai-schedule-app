@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 
 interface CountdownTarget {
   id: string
+  target_date: string
+  target_hours: number
+  completed_hours: number
   title: string
-  targetDate: string
-  totalStudyHours: number
-  completedHours: number
-  subjects: string[]
-  isActive: boolean
+  created_at: string
+  updated_at: string
 }
 
 interface CountdownTargetFormProps {
