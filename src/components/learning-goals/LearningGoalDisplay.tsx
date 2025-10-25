@@ -21,26 +21,8 @@ export function LearningGoalDisplay({ userId, learningGoal, onEdit }: LearningGo
       setGoal(learningGoal)
       setLoading(false)
     } else {
-      // 一時的にデモデータを使用
-      const demoGoal: LearningGoal = {
-        id: 'demo-goal-1',
-        user_id: userId,
-        weekly_hours: 10,
-        block_duration: 30,
-        wake_up_time: '07:00',
-        sleep_time: '23:00',
-        break_duration: 5,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        subject_distribution: [
-          { subject: '英語', percentage: 40 },
-          { subject: '数学', percentage: 35 },
-          { subject: '国語', percentage: 25 }
-        ]
-      }
-      
-      setGoal(demoGoal)
+      // デモデータなし
+      setGoal(null)
       setLoading(false)
     }
   }, [userId, learningGoal])
