@@ -424,11 +424,14 @@ export default function HomePage() {
                   }}
                   onUpdateTarget={(targetId, updatedData) => {
                     console.log('メインページ: カウントダウン目標を更新します:', targetId, updatedData)
-                    setCountdownTargets(prev => prev.map(target => 
+                    const updated = countdownTargets.map(target => 
                       target.id === targetId 
                         ? { ...target, ...updatedData }
                         : target
-                    ))
+                    )
+                    setCountdownTargets(updated)
+                    // 即座にLocalStorageに保存
+                    LocalStorage.saveCountdownTargets(updated)
                   }}
                   onAddNewTarget={(targetData) => {
                     console.log('メインページ: 新しいカウントダウン目標を追加します:', targetData)
@@ -437,11 +440,17 @@ export default function HomePage() {
                       id: `target-${Date.now()}`,
                       completedHours: 0
                     }
-                    setCountdownTargets(prev => [...prev, newTarget])
+                    const updated = [...countdownTargets, newTarget]
+                    setCountdownTargets(updated)
+                    // 即座にLocalStorageに保存
+                    LocalStorage.saveCountdownTargets(updated)
                   }}
                   onDeleteTarget={(targetId) => {
                     console.log('メインページ: カウントダウン目標を削除します:', targetId)
-                    setCountdownTargets(prev => prev.filter(target => target.id !== targetId))
+                    const updated = countdownTargets.filter(target => target.id !== targetId)
+                    setCountdownTargets(updated)
+                    // 即座にLocalStorageに保存
+                    LocalStorage.saveCountdownTargets(updated)
                   }}
                 />
                 <TodaySchedule userId={currentUser.id} />
@@ -499,7 +508,11 @@ export default function HomePage() {
                                 .single()
                               
                               if (error) throw error
-                              if (data) setLearningGoal(data)
+                              if (data) {
+                                setLearningGoal(data)
+                                // 即座にLocalStorageに保存
+                                LocalStorage.saveLearningGoal(data)
+                              }
                             } else {
                               console.log('新規作成モード: 学習目標を追加します')
                               const { data, error } = await supabase
@@ -512,7 +525,11 @@ export default function HomePage() {
                                 .single()
                               
                               if (error) throw error
-                              if (data) setLearningGoal(data)
+                              if (data) {
+                                setLearningGoal(data)
+                                // 即座にLocalStorageに保存
+                                LocalStorage.saveLearningGoal(data)
+                              }
                             }
                           } catch (error) {
                             console.error('Error saving learning goal:', error)
@@ -590,7 +607,10 @@ export default function HomePage() {
                           
                           if (error) throw error
                           if (data) {
-                            setDemoFixedEvents(prev => [...prev, data])
+                            const newFixedEvents = [...demoFixedEvents, data]
+                            setDemoFixedEvents(newFixedEvents)
+                            // 即座にLocalStorageに保存
+                            LocalStorage.saveFixedEvents(newFixedEvents)
                           }
                         } catch (error) {
                           console.error('Error saving fixed event:', error)

@@ -5,6 +5,7 @@ import { FixedEvent } from '@/types'
 import { Button } from '@/components/ui/button'
 import { FixedEventForm } from './FixedEventForm'
 import { FixedEventService } from '@/lib/fixed-events'
+import { LocalStorage } from '@/lib/local-storage'
 
 interface FixedEventListProps {
   userId: string
@@ -100,7 +101,10 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
       if (editingEvent) {
         // デモモード: 編集されたイベントを更新
         const updatedEvent = { ...editingEvent, ...formData, updated_at: new Date().toISOString() }
-        updateEvents(prev => prev.map(event => event.id === editingEvent.id ? updatedEvent : event))
+        const updated = currentEvents.map(event => event.id === editingEvent.id ? updatedEvent : event)
+        updateEvents(updated)
+        // 即座にLocalStorageに保存
+        LocalStorage.saveFixedEvents(updated)
       } else {
         // デモモード: 新しいイベントを追加
         const newEvent: FixedEvent = {
@@ -110,7 +114,10 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
-        updateEvents(prev => [...prev, newEvent])
+        const updated = [...currentEvents, newEvent]
+        updateEvents(updated)
+        // 即座にLocalStorageに保存
+        LocalStorage.saveFixedEvents(updated)
       }
       handleCancel()
     } catch (error) {
@@ -122,7 +129,10 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
     if (confirm('この予定を削除しますか？')) {
       try {
         // デモモード: イベントを削除
-        updateEvents(prev => prev.filter(event => event.id !== eventId))
+        const updated = currentEvents.filter(event => event.id !== eventId)
+        updateEvents(updated)
+        // 即座にLocalStorageに保存
+        LocalStorage.saveFixedEvents(updated)
       } catch (error) {
         console.error('Error deleting event:', error)
       }
