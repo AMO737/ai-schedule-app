@@ -11,32 +11,70 @@ const STORAGE_KEYS = {
 export const CookieStorage = {
   // 固定予定を保存
   saveFixedEvents(events: any[]) {
-    Cookies.set(STORAGE_KEYS.FIXED_EVENTS, JSON.stringify(events), { expires: 365 })
+    try {
+      Cookies.set(STORAGE_KEYS.FIXED_EVENTS, JSON.stringify(events), { expires: 365, sameSite: 'strict' })
+      console.log('Cookie saved - FixedEvents:', events.length)
+    } catch (error) {
+      console.error('Failed to save fixed events:', error)
+    }
   },
 
   // 固定予定を取得
   getFixedEvents(): any[] {
-    const data = Cookies.get(STORAGE_KEYS.FIXED_EVENTS)
-    return data ? JSON.parse(data) : []
+    try {
+      const data = Cookies.get(STORAGE_KEYS.FIXED_EVENTS)
+      if (data) {
+        const parsed = JSON.parse(data)
+        console.log('Cookie loaded - FixedEvents:', parsed.length)
+        return parsed
+      }
+      console.log('Cookie not found - FixedEvents')
+      return []
+    } catch (error) {
+      console.error('Failed to load fixed events:', error)
+      return []
+    }
   },
 
   // 学習ブロックを保存
   saveStudyBlocks(blocks: any[]) {
-    Cookies.set(STORAGE_KEYS.STUDY_BLOCKS, JSON.stringify(blocks), { expires: 365 })
+    try {
+      Cookies.set(STORAGE_KEYS.STUDY_BLOCKS, JSON.stringify(blocks), { expires: 365, sameSite: 'strict' })
+      console.log('Cookie saved - StudyBlocks:', blocks.length)
+    } catch (error) {
+      console.error('Failed to save study blocks:', error)
+    }
   },
 
   // 学習ブロックを取得
   getStudyBlocks(): any[] {
-    const data = Cookies.get(STORAGE_KEYS.STUDY_BLOCKS)
-    return data ? JSON.parse(data) : []
+    try {
+      const data = Cookies.get(STORAGE_KEYS.STUDY_BLOCKS)
+      if (data) {
+        const parsed = JSON.parse(data)
+        console.log('Cookie loaded - StudyBlocks:', parsed.length)
+        return parsed
+      }
+      console.log('Cookie not found - StudyBlocks')
+      return []
+    } catch (error) {
+      console.error('Failed to load study blocks:', error)
+      return []
+    }
   },
 
   // 学習目標を保存
   saveLearningGoal(goal: any) {
-    if (goal) {
-      Cookies.set(STORAGE_KEYS.LEARNING_GOAL, JSON.stringify(goal), { expires: 365 })
-    } else {
-      Cookies.remove(STORAGE_KEYS.LEARNING_GOAL)
+    try {
+      if (goal) {
+        Cookies.set(STORAGE_KEYS.LEARNING_GOAL, JSON.stringify(goal), { expires: 365, sameSite: 'strict' })
+        console.log('Cookie saved - LearningGoal:', goal.id || 'new')
+      } else {
+        Cookies.remove(STORAGE_KEYS.LEARNING_GOAL)
+        console.log('Cookie removed - LearningGoal')
+      }
+    } catch (error) {
+      console.error('Failed to save learning goal:', error)
     }
   },
 
