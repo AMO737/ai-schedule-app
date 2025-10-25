@@ -44,45 +44,83 @@ export default function HomePage() {
   const [demoStudyBlocks, setDemoStudyBlocks] = useState<any[]>([])
   const [countdownTargets, setCountdownTargets] = useState<any[]>([])
 
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
   useEffect(() => {
     checkUser()
     // LocalStorageからデータを読み込む
     loadFromLocalStorage()
+    // 初期読み込み完了後、フラグをリセット
+    setTimeout(() => setIsInitialLoad(false), 500)
   }, [])
 
-  // LocalStorageへの自動保存（データが変更されたとき）
+  // LocalStorageへの自動保存（データが変更されたとき、初期読み込み後のみ）
   useEffect(() => {
-    LocalStorage.saveFixedEvents(demoFixedEvents)
-  }, [demoFixedEvents])
+    if (!isInitialLoad) {
+      LocalStorage.saveFixedEvents(demoFixedEvents)
+    }
+  }, [demoFixedEvents, isInitialLoad])
 
   useEffect(() => {
-    LocalStorage.saveStudyBlocks(demoStudyBlocks)
-  }, [demoStudyBlocks])
+    if (!isInitialLoad) {
+      LocalStorage.saveStudyBlocks(demoStudyBlocks)
+    }
+  }, [demoStudyBlocks, isInitialLoad])
 
   useEffect(() => {
-    LocalStorage.saveLearningGoal(learningGoal)
-  }, [learningGoal])
+    if (!isInitialLoad) {
+      LocalStorage.saveLearningGoal(learningGoal)
+    }
+  }, [learningGoal, isInitialLoad])
 
   useEffect(() => {
-    LocalStorage.saveCountdownTargets(countdownTargets)
-  }, [countdownTargets])
+    if (!isInitialLoad) {
+      LocalStorage.saveCountdownTargets(countdownTargets)
+    }
+  }, [countdownTargets, isInitialLoad])
 
   useEffect(() => {
-    LocalStorage.saveFixedEventExceptions(fixedEventExceptions)
-  }, [fixedEventExceptions])
+    if (!isInitialLoad) {
+      LocalStorage.saveFixedEventExceptions(fixedEventExceptions)
+    }
+  }, [fixedEventExceptions, isInitialLoad])
 
   const loadFromLocalStorage = () => {
+    console.log('=== LocalStorage読み込み開始 ===')
     const fixedEvents = LocalStorage.getFixedEvents()
     const studyBlocks = LocalStorage.getStudyBlocks()
     const learningGoal = LocalStorage.getLearningGoal()
     const countdownTargets = LocalStorage.getCountdownTargets()
     const exceptions = LocalStorage.getFixedEventExceptions()
     
-    if (fixedEvents.length > 0) setDemoFixedEvents(fixedEvents)
-    if (studyBlocks.length > 0) setDemoStudyBlocks(studyBlocks)
-    if (learningGoal) setLearningGoal(learningGoal)
-    if (countdownTargets.length > 0) setCountdownTargets(countdownTargets)
-    if (Object.keys(exceptions).length > 0) setFixedEventExceptions(exceptions)
+    console.log('読み込んだデータ:')
+    console.log('- FixedEvents:', fixedEvents.length)
+    console.log('- StudyBlocks:', studyBlocks.length)
+    console.log('- LearningGoal:', learningGoal ? 'あり' : 'なし')
+    console.log('- CountdownTargets:', countdownTargets.length)
+    console.log('- Exceptions:', Object.keys(exceptions).length)
+    
+    if (fixedEvents.length > 0) {
+      console.log('FixedEventsを設定:', fixedEvents.length)
+      setDemoFixedEvents(fixedEvents)
+    }
+    if (studyBlocks.length > 0) {
+      console.log('StudyBlocksを設定:', studyBlocks.length)
+      setDemoStudyBlocks(studyBlocks)
+    }
+    if (learningGoal) {
+      console.log('LearningGoalを設定')
+      setLearningGoal(learningGoal)
+    }
+    if (countdownTargets.length > 0) {
+      console.log('CountdownTargetsを設定:', countdownTargets.length)
+      setCountdownTargets(countdownTargets)
+    }
+    if (Object.keys(exceptions).length > 0) {
+      console.log('Exceptionsを設定:', Object.keys(exceptions).length)
+      setFixedEventExceptions(exceptions)
+    }
+    console.log('=== LocalStorage読み込み完了 ===')
   }
 
 
