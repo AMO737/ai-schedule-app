@@ -105,24 +105,18 @@ export function NotificationSystem({
     })
   }
 
-  // メール通知を送信
+  // メール通知を送信（ネイティブアプリではローカル通知のみ）
   const sendEmailNotification = async (notification: NotificationItem) => {
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: emailSettings.email,
-          subject: notification.title,
-          message: `${notification.message}\n\n時間: ${notification.time}\n日付: ${notification.date}`
-        })
+      // ネイティブアプリではバックグラウンド通知を使用
+      console.log('📧 メール通知（ローカル実装）:', {
+        email: emailSettings.email,
+        subject: notification.title,
+        message: notification.message
       })
       
-      if (response.ok) {
-        console.log('メール通知を送信しました:', notification.title)
-      }
+      // TODO: ネイティブアプリでは Capacitor Local Notifications を使用
+      // import { LocalNotifications } from '@capacitor/local-notifications'
     } catch (error) {
       console.error('メール送信エラー:', error)
     }
