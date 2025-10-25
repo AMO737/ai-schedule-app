@@ -69,9 +69,10 @@ export default function HomePage() {
     )
   }
 
+  // 一時的にデモユーザーを使用（認証が完成するまで）
+  const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
+
   if (!user) {
-        // 一時的にデモユーザーを使用
-        const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
 
 
     
