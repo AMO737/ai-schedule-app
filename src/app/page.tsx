@@ -519,6 +519,25 @@ export default function HomePage() {
                       <LearningGoalForm
                         onSubmit={async (goalData) => {
                           console.log('学習目標を保存します:', goalData)
+                          
+                          // ローカルストレージモード（Supabase不使用）
+                          const newGoal = {
+                            ...goalData,
+                            id: editingGoal?.id || `goal-${Date.now()}`,
+                            user_id: currentUser.id,
+                            created_at: editingGoal?.created_at || new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                          }
+                          
+                          console.log('学習目標を設定:', newGoal)
+                          setLearningGoal(newGoal)
+                          // 即座にストレージに保存
+                          SimpleStorage.save('learningGoal', newGoal)
+                          
+                          setEditingGoal(null)
+                          setShowLearningGoalForm(false)
+                          
+                          /* Supabase保存（コメントアウト）
                           try {
                             if (editingGoal) {
                               console.log('編集モード: 学習目標を更新します')
@@ -535,7 +554,6 @@ export default function HomePage() {
                               if (error) throw error
                               if (data) {
                                 setLearningGoal(data)
-                                // 即座にストレージに保存
                                 SimpleStorage.save('learningGoal', data)
                               }
                             } else {
@@ -552,15 +570,13 @@ export default function HomePage() {
                               if (error) throw error
                               if (data) {
                                 setLearningGoal(data)
-                                // 即座にストレージに保存
                                 SimpleStorage.save('learningGoal', data)
                               }
                             }
                           } catch (error) {
                             console.error('Error saving learning goal:', error)
                           }
-                          setEditingGoal(null)
-                          setShowLearningGoalForm(false)
+                          */
                         }}
                     onCancel={() => {
                       setEditingGoal(null)
@@ -615,6 +631,29 @@ export default function HomePage() {
                     <FixedEventForm 
                       onSubmit={async (eventData) => {
                         console.log('固定予定を保存します:', eventData)
+                        
+                        // ローカルストレージモード
+                        const newEvent = {
+                          id: `event-${Date.now()}`,
+                          user_id: currentUser.id,
+                          title: eventData.title,
+                          day_of_week: eventData.day_of_week,
+                          start_time: eventData.start_time,
+                          end_time: eventData.end_time,
+                          color: eventData.color,
+                          is_active: true,
+                          created_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString()
+                        }
+                        
+                        const newFixedEvents = [...demoFixedEvents, newEvent]
+                        setDemoFixedEvents(newFixedEvents)
+                        // 即座にストレージに保存
+                        SimpleStorage.save('fixedEvents', newFixedEvents)
+                        
+                        setShowFixedEventForm(false)
+                        
+                        /* Supabase保存（コメントアウト）
                         try {
                           const { data, error } = await supabase
                             .from('fixed_events')
@@ -634,13 +673,12 @@ export default function HomePage() {
                           if (data) {
                             const newFixedEvents = [...demoFixedEvents, data]
                             setDemoFixedEvents(newFixedEvents)
-                            // 即座にストレージに保存
                             SimpleStorage.save('fixedEvents', newFixedEvents)
                           }
                         } catch (error) {
                           console.error('Error saving fixed event:', error)
                         }
-                        setShowFixedEventForm(false)
+                        */
                       }}
                       onCancel={() => setShowFixedEventForm(false)}
                     />
