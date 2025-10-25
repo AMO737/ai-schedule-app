@@ -45,6 +45,7 @@ export default function HomePage() {
 
   useEffect(() => {
     checkUser()
+    loadData()
   }, [])
 
   const checkUser = async () => {
@@ -55,6 +56,43 @@ export default function HomePage() {
       console.error('Error checking user:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadData = async () => {
+    try {
+      // 固定予定を取得
+      const { data: events } = await supabase
+        .from('fixed_events')
+        .select('*')
+        .order('day_of_week', { ascending: true })
+      
+      if (events) {
+        setDemoFixedEvents(events)
+      }
+
+      // 学習ブロックを取得
+      const { data: blocks } = await supabase
+        .from('study_blocks')
+        .select('*')
+        .order('date', { ascending: true })
+      
+      if (blocks) {
+        setDemoStudyBlocks(blocks)
+      }
+
+      // 学習目標を取得
+      const { data: goals } = await supabase
+        .from('learning_goals')
+        .select('*')
+        .limit(1)
+        .single()
+      
+      if (goals) {
+        setLearningGoal(goals)
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
     }
   }
 
@@ -344,25 +382,37 @@ export default function HomePage() {
                       <LearningGoalForm
                         onSubmit={async (goalData) => {
                           console.log('学習目標を保存します:', goalData)
-                          if (editingGoal) {
-                            console.log('編集モード: 学習目標を更新します')
-                            // 編集の場合は更新処理
-                            setLearningGoal((prev: any) => ({
-                              ...prev,
-                              ...goalData,
-                              updated_at: new Date().toISOString()
-                            }))
-                          } else {
-                            console.log('新規作成モード: 学習目標を追加します')
-                            // 新規作成の場合は追加処理
-                            const newGoal = {
-                              ...goalData,
-                              id: `goal-${Date.now()}`,
-                              user_id: demoUser.id,
-                              created_at: new Date().toISOString(),
-                              updated_at: new Date().toISOString()
+                          try {
+                            if (editingGoal) {
+                              console.log('編集モード: 学習目標を更新します')
+                              const { data, error } = await supabase
+                                .from('learning_goals')
+                                .update({
+                                  ...goalData,
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('id', editingGoal.id)
+                                .select()
+                                .single()
+                              
+                              if (error) throw error
+                              if (data) setLearningGoal(data)
+                            } else {
+                              console.log('新規作成モード: 学習目標を追加します')
+                              const { data, error } = await supabase
+                                .from('learning_goals')
+                                .insert({
+                                  ...goalData,
+                                  user_id: demoUser.id
+                                })
+                                .select()
+                                .single()
+                              
+                              if (error) throw error
+                              if (data) setLearningGoal(data)
                             }
-                            setLearningGoal(newGoal)
+                          } catch (error) {
+                            console.error('Error saving learning goal:', error)
                           }
                           setEditingGoal(null)
                           setShowLearningGoalForm(false)
@@ -420,14 +470,28 @@ export default function HomePage() {
                     <FixedEventForm 
                       onSubmit={async (eventData) => {
                         console.log('固定予定を保存します:', eventData)
-                        const newEvent = {
-                          ...eventData,
-                          id: `event-${Date.now()}`,
-                          user_id: 'demo-user',
-                          created_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString()
+                        try {
+                          const { data, error } = await supabase
+                            .from('fixed_events')
+                            .insert({
+                              user_id: 'demo-user',
+                              title: eventData.title,
+                              day_of_week: eventData.day_of_week,
+                              start_time: eventData.start_time,
+                              end_time: eventData.end_time,
+                              color: eventData.color,
+                              is_active: true
+                            })
+                            .select()
+                            .single()
+                          
+                          if (error) throw error
+                          if (data) {
+                            setDemoFixedEvents(prev => [...prev, data])
+                          }
+                        } catch (error) {
+                          console.error('Error saving fixed event:', error)
                         }
-                        setDemoFixedEvents(prev => [...prev, newEvent])
                         setShowFixedEventForm(false)
                       }}
                       onCancel={() => setShowFixedEventForm(false)}
