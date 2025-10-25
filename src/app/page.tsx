@@ -347,7 +347,7 @@ export default function HomePage() {
                           if (editingGoal) {
                             console.log('編集モード: 学習目標を更新します')
                             // 編集の場合は更新処理
-                            setLearningGoal(prev => ({
+                            setLearningGoal((prev: any) => ({
                               ...prev,
                               ...goalData,
                               updated_at: new Date().toISOString()
