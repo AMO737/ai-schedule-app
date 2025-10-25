@@ -77,30 +77,10 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
     return totalMinutes / 60 // 分を時間に変換
   }, [studyBlocks])
 
-  // デモデータ（外部からtargetsが渡されない場合のみ）
+  // デモデータなし
   useEffect(() => {
     if (!externalTargets || externalTargets.length === 0) {
-      const demoTargets: CountdownTarget[] = [
-        {
-          id: 'demo-target-1',
-          title: '大学受験',
-          targetDate: '2024-03-15',
-          totalStudyHours: 200,
-          completedHours: 0, // 自動計算される
-          subjects: ['英語', '数学', '国語'],
-          isActive: true
-        },
-        {
-          id: 'demo-target-2',
-          title: 'TOEIC試験',
-          targetDate: '2024-02-28',
-          totalStudyHours: 50,
-          completedHours: 0, // 自動計算される
-          subjects: ['英語'],
-          isActive: true
-        }
-      ]
-      updateTargets(demoTargets)
+      updateTargets([])
     }
   }, [userId, externalTargets])
 

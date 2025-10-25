@@ -12,20 +12,8 @@ export function WeeklyProgress({ userId }: WeeklyProgressProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 一時的にデモデータを使用
-    const demoProgress: WeeklyProgressType = {
-      week_start_date: new Date().toISOString().split('T')[0],
-      total_planned_hours: 10,
-      total_completed_hours: 6.5,
-      completion_rate: 65,
-      subject_progress: [
-        { subject: '英語', completed_hours: 3, planned_hours: 4, completion_rate: 75 },
-        { subject: '数学', completed_hours: 2.5, planned_hours: 3, completion_rate: 83 },
-        { subject: '国語', completed_hours: 1, planned_hours: 3, completion_rate: 33 }
-      ]
-    }
-    
-    setProgress(demoProgress)
+    // デモデータなし
+    setProgress(null)
     setLoading(false)
   }, [userId])
 

@@ -13,43 +13,8 @@ export function TodaySchedule({ userId }: TodayScheduleProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 一時的にデモデータを使用
-    const demoBlocks: StudyBlock[] = [
-      {
-        id: 'demo-1',
-        user_id: userId,
-        subject: '英語',
-        date: new Date().toISOString().split('T')[0],
-        start_time: '09:00',
-        end_time: '09:30',
-        duration: 30,
-        color: '#10B981',
-        is_completed: false,
-        is_skipped: false,
-        hasAlarm: true,
-        completed_at: undefined,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'demo-2',
-        user_id: userId,
-        subject: '数学',
-        date: new Date().toISOString().split('T')[0],
-        start_time: '10:00',
-        end_time: '10:45',
-        duration: 45,
-        color: '#EF4444',
-        is_completed: false,
-        is_skipped: false,
-        hasAlarm: false,
-        completed_at: undefined,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ]
-    
-    setBlocks(demoBlocks)
+    // デモデータなし
+    setBlocks([])
     setLoading(false)
   }, [userId])
 
