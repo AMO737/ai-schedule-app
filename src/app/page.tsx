@@ -165,6 +165,20 @@ export default function HomePage() {
   // ユーザー情報（ログインしていない場合はデモユーザー）
   const currentUser = user || { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
 
+  // 時間帯に応じたあいさつを生成
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour >= 5 && hour < 12) {
+      return 'おはようございます'
+    } else if (hour >= 12 && hour < 18) {
+      return 'こんにちは'
+    } else if (hour >= 18 && hour < 22) {
+      return 'こんばんは'
+    } else {
+      return 'おやすみなさい'
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -211,7 +225,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                こんにちは、{currentUser.user_metadata?.name || 'ユーザー'}さん
+                {getGreeting()}
               </h1>
                 <p className="text-gray-800 mt-2">
                   今日も効率的に学習を進めましょう
