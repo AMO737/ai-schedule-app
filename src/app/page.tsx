@@ -47,11 +47,7 @@ export default function HomePage() {
     checkUser()
   }, [])
 
-  useEffect(() => {
-    if (user) {
-      loadData()
-    }
-  }, [user])
+
 
   const checkUser = async () => {
     try {
@@ -61,9 +57,6 @@ export default function HomePage() {
       // 認証状態の変更をリッスン
       supabase.auth.onAuthStateChange((event, session) => {
         setUser(session?.user ?? null)
-        if (session?.user) {
-          loadData()
-        }
       })
     } catch (error) {
       console.error('Error checking user:', error)
@@ -147,10 +140,15 @@ export default function HomePage() {
             </p>
             <button
               onClick={async () => {
-                // デモユーザーとして続行
+                // デモユーザーとして続行（データは空）
                 const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
                 setUser(demoUser as any)
-                loadData()
+                // データはリセット
+                setDemoFixedEvents([])
+                setDemoStudyBlocks([])
+                setCountdownTargets([])
+                setLearningGoal(null)
+                setFixedEventExceptions({})
               }}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
