@@ -77,12 +77,14 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
     return totalMinutes / 60 // 分を時間に変換
   }, [studyBlocks])
 
-  // デモデータなし
+  // デモデータなし（初期化時のみ実行）
   useEffect(() => {
     if (!externalTargets || externalTargets.length === 0) {
-      updateTargets([])
+      if (currentTargets.length === 0) {
+        updateTargets([])
+      }
     }
-  }, [userId, externalTargets])
+  }, [])
 
   // 学習ブロックが変更されたときに完了時間を再計算
   useEffect(() => {
@@ -101,6 +103,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
         updateTargets(updatedTargets)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyBlocks, currentTargets.length])
 
   // カウントダウン計算
