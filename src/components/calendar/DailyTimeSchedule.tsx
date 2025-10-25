@@ -259,23 +259,17 @@ export function DailyTimeSchedule({
         </div>
       </div>
 
-      {/* タイムスケジュール表示 */}
+      {/* タイムスケジュール表示 - スマホ向け縦表示 */}
       <div className="border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-49 gap-0">
-          {/* 時間ラベル */}
-          <div className="col-span-1 bg-gray-100 border-r border-gray-200 p-2 text-xs font-medium text-gray-700">
-            時間
-          </div>
-          
-          {/* 30分おきの時間スロット */}
+        <div className="space-y-1">
           {timeSlots.map((slot, index) => (
             <div
               key={index}
               className={`
-                col-span-1 min-h-[40px] border-r border-gray-200 p-1 text-xs
+                flex items-center justify-between p-3 min-h-[60px] border-b border-gray-200
                 ${getTimeSlotBackgroundColor(slot)}
-                ${index % 2 === 0 ? 'border-b border-gray-200' : ''}
-                hover:bg-opacity-80 transition-colors cursor-pointer
+                ${slot.type === 'available' ? 'cursor-pointer hover:bg-opacity-80' : ''}
+                transition-colors
               `}
               onClick={() => {
                 if (slot.type === 'available') {
@@ -286,23 +280,33 @@ export function DailyTimeSchedule({
                 }
               }}
             >
-              <div className="text-center">
-                {index % 2 === 0 && (
-                  <div className={`font-medium ${getTimeSlotTextColor(slot)}`}>
-                    {formatTime(slot.hour, slot.minute)}
+              <div className="flex items-center space-x-3 flex-1">
+                <div className="w-16 text-sm font-medium text-gray-700">
+                  {formatTime(slot.hour, slot.minute)}
+                </div>
+                {slot.title ? (
+                  <div className="flex-1">
+                    <div className={`font-medium ${getTimeSlotTextColor(slot)}`}>
+                      {slot.title}
+                    </div>
+                    {slot.duration && (
+                      <div className={`text-xs ${getTimeSlotTextColor(slot)}`}>
+                        {slot.duration}分
+                      </div>
+                    )}
                   </div>
-                )}
-                {slot.title && (
-                  <div className={`text-xs truncate ${getTimeSlotTextColor(slot)}`}>
-                    {slot.title}
-                  </div>
-                )}
-                {slot.duration && (
-                  <div className={`text-xs ${getTimeSlotTextColor(slot)}`}>
-                    {slot.duration}分
+                ) : (
+                  <div className={`flex-1 text-sm ${getTimeSlotTextColor(slot)}`}>
+                    空き時間
                   </div>
                 )}
               </div>
+              {slot.type !== 'available' && (
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: slot.color }}
+                />
+              )}
             </div>
           ))}
         </div>
