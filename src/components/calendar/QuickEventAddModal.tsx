@@ -197,10 +197,12 @@ export function QuickEventAddModal({
                     key={duration}
                     type="button"
                     onClick={() => {
+                      console.log('クイック設定クリック:', duration, '分')
                       const endTime = calculateEndTime(formData.startTime, duration)
+                      console.log('終了時間を設定:', endTime)
                       setFormData(prev => ({ ...prev, endTime }))
                     }}
-                    className="px-3 py-2 text-xs border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 text-xs border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     {duration}分
                   </button>
