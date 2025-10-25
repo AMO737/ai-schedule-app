@@ -259,8 +259,58 @@ export function DailyTimeSchedule({
         </div>
       </div>
 
-      {/* タイムスケジュール表示 - スマホ向け縦表示 */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* タイムスケジュール表示 - PC版は横、スマホ版は縦 */}
+      
+      {/* PC版: 横並び表示 */}
+      <div className="hidden md:block border rounded-lg overflow-hidden">
+        <div className="grid grid-cols-49 gap-0">
+          {/* 時間ラベル */}
+          <div className="col-span-1 bg-gray-100 border-r border-gray-200 p-2 text-xs font-medium text-gray-700">
+            時間
+          </div>
+          
+          {/* 30分おきの時間スロット */}
+          {timeSlots.map((slot, index) => (
+            <div
+              key={index}
+              className={`
+                col-span-1 min-h-[40px] border-r border-gray-200 p-1 text-xs
+                ${getTimeSlotBackgroundColor(slot)}
+                ${index % 2 === 0 ? 'border-b border-gray-200' : ''}
+                hover:bg-opacity-80 transition-colors cursor-pointer
+              `}
+              onClick={() => {
+                if (slot.type === 'available') {
+                  console.log('空いている時間帯をクリック:', slot.time)
+                  setSelectedTimeSlot(slot.time)
+                  setShowQuickAddModal(true)
+                }
+              }}
+            >
+              <div className="text-center">
+                {index % 2 === 0 && (
+                  <div className={`font-medium ${getTimeSlotTextColor(slot)}`}>
+                    {formatTime(slot.hour, slot.minute)}
+                  </div>
+                )}
+                {slot.title && (
+                  <div className={`text-xs truncate ${getTimeSlotTextColor(slot)}`}>
+                    {slot.title}
+                  </div>
+                )}
+                {slot.duration && (
+                  <div className={`text-xs ${getTimeSlotTextColor(slot)}`}>
+                    {slot.duration}分
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* スマホ版: 縦並び表示 */}
+      <div className="md:hidden border rounded-lg overflow-hidden">
         <div className="space-y-1">
           {timeSlots.map((slot, index) => (
             <div
@@ -273,7 +323,6 @@ export function DailyTimeSchedule({
               `}
               onClick={() => {
                 if (slot.type === 'available') {
-                  // 空いている時間帯をクリックした場合の処理
                   console.log('空いている時間帯をクリック:', slot.time)
                   setSelectedTimeSlot(slot.time)
                   setShowQuickAddModal(true)
