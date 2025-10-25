@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { CookieStorage } from '@/lib/cookie-storage'
 import { FixedEventForm } from '@/components/fixed-events/FixedEventForm'
 import { FixedEventList } from '@/components/fixed-events/FixedEventList'
 import { LearningGoalForm } from '@/components/learning-goals/LearningGoalForm'
@@ -45,7 +46,44 @@ export default function HomePage() {
 
   useEffect(() => {
     checkUser()
+    // Cookieからデータを読み込む
+    loadFromCookies()
   }, [])
+
+  // Cookieへの自動保存（データが変更されたとき）
+  useEffect(() => {
+    CookieStorage.saveFixedEvents(demoFixedEvents)
+  }, [demoFixedEvents])
+
+  useEffect(() => {
+    CookieStorage.saveStudyBlocks(demoStudyBlocks)
+  }, [demoStudyBlocks])
+
+  useEffect(() => {
+    CookieStorage.saveLearningGoal(learningGoal)
+  }, [learningGoal])
+
+  useEffect(() => {
+    CookieStorage.saveCountdownTargets(countdownTargets)
+  }, [countdownTargets])
+
+  useEffect(() => {
+    CookieStorage.saveFixedEventExceptions(fixedEventExceptions)
+  }, [fixedEventExceptions])
+
+  const loadFromCookies = () => {
+    const fixedEvents = CookieStorage.getFixedEvents()
+    const studyBlocks = CookieStorage.getStudyBlocks()
+    const learningGoal = CookieStorage.getLearningGoal()
+    const countdownTargets = CookieStorage.getCountdownTargets()
+    const exceptions = CookieStorage.getFixedEventExceptions()
+    
+    if (fixedEvents.length > 0) setDemoFixedEvents(fixedEvents)
+    if (studyBlocks.length > 0) setDemoStudyBlocks(studyBlocks)
+    if (learningGoal) setLearningGoal(learningGoal)
+    if (countdownTargets.length > 0) setCountdownTargets(countdownTargets)
+    if (Object.keys(exceptions).length > 0) setFixedEventExceptions(exceptions)
+  }
 
 
 
@@ -149,13 +187,15 @@ export default function HomePage() {
                 setCountdownTargets([])
                 setLearningGoal(null)
                 setFixedEventExceptions({})
+                // Cookieもクリア
+                CookieStorage.clearAll()
               }}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               始める
             </button>
             <p className="text-sm text-gray-500 mt-4 text-center">
-              ※データはローカルストレージに保存されます
+              ※データはCookieに保存され、続きから利用できます
             </p>
           </div>
         </div>
