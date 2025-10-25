@@ -57,6 +57,14 @@ export default function HomePage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      
+      // 認証状態の変更をリッスン
+      supabase.auth.onAuthStateChange((event, session) => {
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          loadData()
+        }
+      })
     } catch (error) {
       console.error('Error checking user:', error)
     } finally {
