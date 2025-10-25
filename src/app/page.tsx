@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LocalStorage } from '@/lib/local-storage'
+import { SimpleStorage } from '@/lib/simple-storage'
 import { FixedEventForm } from '@/components/fixed-events/FixedEventForm'
 import { FixedEventList } from '@/components/fixed-events/FixedEventList'
 import { LearningGoalForm } from '@/components/learning-goals/LearningGoalForm'
@@ -48,50 +48,50 @@ export default function HomePage() {
 
   useEffect(() => {
     checkUser()
-    // LocalStorageからデータを読み込む
-    loadFromLocalStorage()
+    // ストレージからデータを読み込む
+    loadFromStorage()
     // 初期読み込み完了後、フラグをリセット
-    setTimeout(() => setIsInitialLoad(false), 500)
+    setTimeout(() => setIsInitialLoad(false), 1000)
   }, [])
 
-  // LocalStorageへの自動保存（データが変更されたとき、初期読み込み後のみ）
+  // SimpleStorageへの自動保存（データが変更されたとき、初期読み込み後のみ）
   useEffect(() => {
     if (!isInitialLoad) {
-      LocalStorage.saveFixedEvents(demoFixedEvents)
+      SimpleStorage.save('fixedEvents', demoFixedEvents)
     }
   }, [demoFixedEvents, isInitialLoad])
 
   useEffect(() => {
     if (!isInitialLoad) {
-      LocalStorage.saveStudyBlocks(demoStudyBlocks)
+      SimpleStorage.save('studyBlocks', demoStudyBlocks)
     }
   }, [demoStudyBlocks, isInitialLoad])
 
   useEffect(() => {
     if (!isInitialLoad) {
-      LocalStorage.saveLearningGoal(learningGoal)
+      SimpleStorage.save('learningGoal', learningGoal)
     }
   }, [learningGoal, isInitialLoad])
 
   useEffect(() => {
     if (!isInitialLoad) {
-      LocalStorage.saveCountdownTargets(countdownTargets)
+      SimpleStorage.save('countdownTargets', countdownTargets)
     }
   }, [countdownTargets, isInitialLoad])
 
   useEffect(() => {
     if (!isInitialLoad) {
-      LocalStorage.saveFixedEventExceptions(fixedEventExceptions)
+      SimpleStorage.save('fixedEventExceptions', fixedEventExceptions)
     }
   }, [fixedEventExceptions, isInitialLoad])
 
-  const loadFromLocalStorage = () => {
-    console.log('=== LocalStorage読み込み開始 ===')
-    const fixedEvents = LocalStorage.getFixedEvents()
-    const studyBlocks = LocalStorage.getStudyBlocks()
-    const learningGoal = LocalStorage.getLearningGoal()
-    const countdownTargets = LocalStorage.getCountdownTargets()
-    const exceptions = LocalStorage.getFixedEventExceptions()
+  const loadFromStorage = () => {
+    console.log('=== データ読み込み開始 ===')
+    const fixedEvents = SimpleStorage.load('fixedEvents', [])
+    const studyBlocks = SimpleStorage.load('studyBlocks', [])
+    const learningGoal = SimpleStorage.load('learningGoal', null)
+    const countdownTargets = SimpleStorage.load('countdownTargets', [])
+    const exceptions = SimpleStorage.load('fixedEventExceptions', {})
     
     console.log('読み込んだデータ:')
     console.log('- FixedEvents:', fixedEvents.length)
@@ -100,27 +100,14 @@ export default function HomePage() {
     console.log('- CountdownTargets:', countdownTargets.length)
     console.log('- Exceptions:', Object.keys(exceptions).length)
     
-    if (fixedEvents.length > 0) {
-      console.log('FixedEventsを設定:', fixedEvents.length)
-      setDemoFixedEvents(fixedEvents)
-    }
-    if (studyBlocks.length > 0) {
-      console.log('StudyBlocksを設定:', studyBlocks.length)
-      setDemoStudyBlocks(studyBlocks)
-    }
-    if (learningGoal) {
-      console.log('LearningGoalを設定')
-      setLearningGoal(learningGoal)
-    }
-    if (countdownTargets.length > 0) {
-      console.log('CountdownTargetsを設定:', countdownTargets.length)
-      setCountdownTargets(countdownTargets)
-    }
-    if (Object.keys(exceptions).length > 0) {
-      console.log('Exceptionsを設定:', Object.keys(exceptions).length)
-      setFixedEventExceptions(exceptions)
-    }
-    console.log('=== LocalStorage読み込み完了 ===')
+    // データがあれば設定
+    setDemoFixedEvents(fixedEvents)
+    setDemoStudyBlocks(studyBlocks)
+    if (learningGoal) setLearningGoal(learningGoal)
+    setCountdownTargets(countdownTargets)
+    setFixedEventExceptions(exceptions)
+    
+    console.log('=== データ読み込み完了 ===')
   }
 
 
@@ -239,15 +226,15 @@ export default function HomePage() {
                 setCountdownTargets([])
                 setLearningGoal(null)
                 setFixedEventExceptions({})
-                // LocalStorageもクリア
-                LocalStorage.clearAll()
+                // ストレージもクリア
+                SimpleStorage.clear()
               }}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               始める
             </button>
             <p className="text-sm text-gray-500 mt-4 text-center">
-              ※データはLocalStorageに保存され、続きから利用できます
+              ※データは保存され、続きから利用できます
             </p>
           </div>
         </div>
@@ -468,8 +455,8 @@ export default function HomePage() {
                         : target
                     )
                     setCountdownTargets(updated)
-                    // 即座にLocalStorageに保存
-                    LocalStorage.saveCountdownTargets(updated)
+                    // 即座にストレージに保存
+                    SimpleStorage.save('countdownTargets', updated)
                   }}
                   onAddNewTarget={(targetData) => {
                     console.log('メインページ: 新しいカウントダウン目標を追加します:', targetData)
@@ -480,15 +467,15 @@ export default function HomePage() {
                     }
                     const updated = [...countdownTargets, newTarget]
                     setCountdownTargets(updated)
-                    // 即座にLocalStorageに保存
-                    LocalStorage.saveCountdownTargets(updated)
+                    // 即座にストレージに保存
+                    SimpleStorage.save('countdownTargets', updated)
                   }}
                   onDeleteTarget={(targetId) => {
                     console.log('メインページ: カウントダウン目標を削除します:', targetId)
                     const updated = countdownTargets.filter(target => target.id !== targetId)
                     setCountdownTargets(updated)
-                    // 即座にLocalStorageに保存
-                    LocalStorage.saveCountdownTargets(updated)
+                    // 即座にストレージに保存
+                    SimpleStorage.save('countdownTargets', updated)
                   }}
                 />
                 <TodaySchedule userId={currentUser.id} />
@@ -548,8 +535,8 @@ export default function HomePage() {
                               if (error) throw error
                               if (data) {
                                 setLearningGoal(data)
-                                // 即座にLocalStorageに保存
-                                LocalStorage.saveLearningGoal(data)
+                                // 即座にストレージに保存
+                                SimpleStorage.save('learningGoal', data)
                               }
                             } else {
                               console.log('新規作成モード: 学習目標を追加します')
@@ -565,8 +552,8 @@ export default function HomePage() {
                               if (error) throw error
                               if (data) {
                                 setLearningGoal(data)
-                                // 即座にLocalStorageに保存
-                                LocalStorage.saveLearningGoal(data)
+                                // 即座にストレージに保存
+                                SimpleStorage.save('learningGoal', data)
                               }
                             }
                           } catch (error) {
@@ -647,8 +634,8 @@ export default function HomePage() {
                           if (data) {
                             const newFixedEvents = [...demoFixedEvents, data]
                             setDemoFixedEvents(newFixedEvents)
-                            // 即座にLocalStorageに保存
-                            LocalStorage.saveFixedEvents(newFixedEvents)
+                            // 即座にストレージに保存
+                            SimpleStorage.save('fixedEvents', newFixedEvents)
                           }
                         } catch (error) {
                           console.error('Error saving fixed event:', error)

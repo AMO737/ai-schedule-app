@@ -5,7 +5,7 @@ import { FixedEvent } from '@/types'
 import { Button } from '@/components/ui/button'
 import { FixedEventForm } from './FixedEventForm'
 import { FixedEventService } from '@/lib/fixed-events'
-import { LocalStorage } from '@/lib/local-storage'
+import { SimpleStorage } from '@/lib/simple-storage'
 
 interface FixedEventListProps {
   userId: string
@@ -103,8 +103,8 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
         const updatedEvent = { ...editingEvent, ...formData, updated_at: new Date().toISOString() }
         const updated = currentEvents.map(event => event.id === editingEvent.id ? updatedEvent : event)
         updateEvents(updated)
-        // 即座にLocalStorageに保存
-        LocalStorage.saveFixedEvents(updated)
+        // 即座にストレージに保存
+        SimpleStorage.save('fixedEvents', updated)
       } else {
         // デモモード: 新しいイベントを追加
         const newEvent: FixedEvent = {
@@ -116,8 +116,8 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
         }
         const updated = [...currentEvents, newEvent]
         updateEvents(updated)
-        // 即座にLocalStorageに保存
-        LocalStorage.saveFixedEvents(updated)
+        // 即座にストレージに保存
+        SimpleStorage.save('fixedEvents', updated)
       }
       handleCancel()
     } catch (error) {
@@ -131,8 +131,8 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
         // デモモード: イベントを削除
         const updated = currentEvents.filter(event => event.id !== eventId)
         updateEvents(updated)
-        // 即座にLocalStorageに保存
-        LocalStorage.saveFixedEvents(updated)
+        // 即座にストレージに保存
+        SimpleStorage.save('fixedEvents', updated)
       } catch (error) {
         console.error('Error deleting event:', error)
       }
