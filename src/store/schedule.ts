@@ -151,9 +151,7 @@ export const useScheduleStore = create<ScheduleState>()(
     }),
     {
       name: "ai-schedule-app:v1",
-      storage: createJSONStorage(() =>
-        typeof window === "undefined" ? undefined : localStorage
-      ),
+      storage: typeof window !== "undefined" ? createJSONStorage(() => localStorage) : undefined,
       version: 1,
       // 初期データ読み込み完了フラグ
       onRehydrateStorage: () => (state) => {

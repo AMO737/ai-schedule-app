@@ -22,10 +22,8 @@ interface CountdownTargetFormProps {
 export function CountdownTargetForm({ onSubmit, onCancel, initialData }: CountdownTargetFormProps) {
   const [formData, setFormData] = useState({
     title: '',
-    targetDate: '',
-    totalStudyHours: 50,
-    subjects: [''],
-    isActive: true,
+    target_date: '',
+    target_hours: 50,
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,10 +34,8 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
     if (initialData) {
       const newFormData = {
         title: initialData.title || '',
-        targetDate: initialData.targetDate || '',
-        totalStudyHours: initialData.totalStudyHours || 50,
-        subjects: initialData.subjects || [''],
-        isActive: initialData.isActive ?? true,
+        target_date: initialData.target_date || '',
+        target_hours: initialData.target_hours || 50,
       }
       console.log('編集モード - フォームデータを設定:', newFormData)
       setFormData(newFormData)
@@ -47,10 +43,8 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
       // 新規作成時はデフォルト値にリセット
       const defaultFormData = {
         title: '',
-        targetDate: '',
-        totalStudyHours: 50,
-        subjects: [''],
-        isActive: true,
+        target_date: '',
+        target_hours: 50,
       }
       console.log('新規作成モード - デフォルトデータを設定:', defaultFormData)
       setFormData(defaultFormData)
@@ -68,20 +62,13 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
       return
     }
     
-    if (!formData.targetDate) {
+    if (!formData.target_date) {
       alert('目標日を選択してください。')
       return
     }
     
-    if (formData.totalStudyHours <= 0) {
+    if (formData.target_hours <= 0) {
       alert('総学習時間は0より大きい値を入力してください。')
-      return
-    }
-    
-
-    const validSubjects = formData.subjects.filter(subject => subject.trim())
-    if (validSubjects.length === 0) {
-      alert('少なくとも1つの科目を入力してください。')
       return
     }
 
@@ -90,11 +77,11 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
     try {
       const submitData = {
         title: formData.title.trim(),
-        targetDate: formData.targetDate,
-        totalStudyHours: formData.totalStudyHours,
-        completedHours: 0, // 自動計算される
-        subjects: validSubjects,
-        isActive: formData.isActive,
+        target_date: formData.target_date,
+        target_hours: formData.target_hours,
+        completed_hours: 0, // 自動計算される
+        created_at: initialData?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }
       
       console.log('送信データ:', submitData)
@@ -118,30 +105,7 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
     })
   }
 
-  const handleSubjectChange = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      subjects: prev.subjects.map((subject, i) => 
-        i === index ? value : subject
-      )
-    }))
-  }
 
-  const addSubject = () => {
-    setFormData(prev => ({
-      ...prev,
-      subjects: [...prev.subjects, '']
-    }))
-  }
-
-  const removeSubject = (index: number) => {
-    if (formData.subjects.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        subjects: prev.subjects.filter((_, i) => i !== index)
-      }))
-    }
-  }
 
   // 今日の日付を取得（最小値として設定）
   const today = new Date().toISOString().split('T')[0]
@@ -170,8 +134,8 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
         <input
           type="date"
           id="targetDate"
-          value={formData.targetDate}
-          onChange={(e) => handleChange('targetDate', e.target.value)}
+          value={formData.target_date}
+          onChange={(e) => handleChange('target_date', e.target.value)}
           min={today}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
@@ -188,8 +152,8 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
           min="1"
           max="1000"
           step="0.5"
-          value={formData.totalStudyHours.toString()}
-          onChange={(e) => handleChange('totalStudyHours', parseFloat(e.target.value) || 0)}
+          value={formData.target_hours.toString()}
+          onChange={(e) => handleChange('target_hours', parseFloat(e.target.value) || 0)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
@@ -198,68 +162,19 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
         </p>
       </div>
 
-      <div>
-        <div className="flex justify-between items-center mb-3">
-          <label className="block text-sm font-medium text-gray-700">
-            対象科目
-          </label>
-          <Button type="button" onClick={addSubject} variant="outline" size="sm">
-            科目を追加
-          </Button>
-        </div>
-        
-        <div className="space-y-3">
-          {formData.subjects.map((subject, index) => (
-            <div key={index} className="flex items-center space-x-3">
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => handleSubjectChange(index, e.target.value)}
-                placeholder="科目名"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              {formData.subjects.length > 1 && (
-                <Button
-                  type="button"
-                  onClick={() => removeSubject(index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  削除
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="isActive"
-          checked={formData.isActive}
-          onChange={(e) => handleChange('isActive', e.target.checked)}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        />
-        <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-          アクティブ（カウントダウンを表示）
-        </label>
-      </div>
-
       {/* 進捗プレビュー */}
-      {formData.targetDate && formData.totalStudyHours > 0 && (
+      {formData.target_date && formData.target_hours > 0 && (
         <div className="p-4 bg-gray-50 rounded-lg">
           <h4 className="font-medium text-gray-700 mb-2">プレビュー</h4>
           <div className="text-sm text-gray-600 space-y-1">
             <div>残り時間: {(() => {
-              const targetDate = new Date(formData.targetDate)
+              const targetDate = new Date(formData.target_date)
               const now = new Date()
               const diffDays = Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
               return diffDays > 0 ? `${diffDays}日` : '期限切れ'
             })()}</div>
             <div>完了率: 0.0% (学習ブロック完了後に自動更新)</div>
-            <div>残り学習時間: {formData.totalStudyHours}時間</div>
+            <div>残り学習時間: {formData.target_hours}時間</div>
           </div>
         </div>
       )}

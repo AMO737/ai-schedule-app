@@ -109,8 +109,6 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
       const newTimeLeft: { [key: string]: string } = {}
       
       currentTargets.forEach(target => {
-        if (!target.isActive) return
-        
         const targetDate = new Date(target.target_date)
         const now = new Date()
         const diff = targetDate.getTime() - now.getTime()
@@ -172,14 +170,6 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
     }
   }
 
-  const handleToggleActive = (targetId: string) => {
-    updateTargets(prev => prev.map(target => 
-      target.id === targetId 
-        ? { ...target, isActive: !target.isActive }
-        : target
-    ))
-  }
-
   const handleAdd = () => {
     console.log('CountdownTimer: 新しい目標を追加します')
     onAddTarget()
@@ -204,7 +194,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
     const newTarget: CountdownTarget = {
       ...targetData,
       id: `target-${Date.now()}`,
-      completedHours: calculateCompletedHours(targetData as CountdownTarget)
+      completed_hours: calculateCompletedHours(targetData as CountdownTarget)
     }
     
     updateTargets(prev => [...prev, newTarget])
@@ -249,13 +239,6 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <h3 className="font-semibold text-lg">{target.title}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      target.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {target.isActive ? 'アクティブ' : '非アクティブ'}
-                    </span>
                   </div>
                   <div className="flex space-x-2">
                     <Button
@@ -265,13 +248,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
                     >
                       編集
                     </Button>
-                    <Button
-                      onClick={() => handleToggleActive(target.id)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {target.isActive ? '非アクティブ' : 'アクティブ'}
-                    </Button>
+
                     <Button
                       onClick={() => handleDelete(target.id)}
                       variant="outline"
@@ -323,35 +300,20 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
                   </div>
                 </div>
 
-                {/* 科目と1日あたりの必要時間 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">対象科目</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {target.subjects.map((subject, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
-                        >
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
+                {/* 1日あたりの必要時間 */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">1日あたりの必要時間</h4>
+                  <div className={`text-lg font-semibold ${
+                    dailyRequiredHours > 8 ? 'text-red-600' : 
+                    dailyRequiredHours > 4 ? 'text-yellow-600' : 'text-green-600'
+                  }`}>
+                    {dailyRequiredHours.toFixed(1)}時間
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">1日あたりの必要時間</h4>
-                    <div className={`text-lg font-semibold ${
-                      dailyRequiredHours > 8 ? 'text-red-600' : 
-                      dailyRequiredHours > 4 ? 'text-yellow-600' : 'text-green-600'
-                    }`}>
-                      {dailyRequiredHours.toFixed(1)}時間
+                  {dailyRequiredHours > 8 && (
+                    <div className="text-xs text-red-600 mt-1">
+                      ⚠️ 1日8時間を超えています
                     </div>
-                    {dailyRequiredHours > 8 && (
-                      <div className="text-xs text-red-600 mt-1">
-                        ⚠️ 1日8時間を超えています
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             )
