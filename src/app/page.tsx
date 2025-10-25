@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { CookieStorage } from '@/lib/cookie-storage'
+import { LocalStorage } from '@/lib/local-storage'
 import { FixedEventForm } from '@/components/fixed-events/FixedEventForm'
 import { FixedEventList } from '@/components/fixed-events/FixedEventList'
 import { LearningGoalForm } from '@/components/learning-goals/LearningGoalForm'
@@ -46,37 +46,37 @@ export default function HomePage() {
 
   useEffect(() => {
     checkUser()
-    // Cookieからデータを読み込む
-    loadFromCookies()
+    // LocalStorageからデータを読み込む
+    loadFromLocalStorage()
   }, [])
 
-  // Cookieへの自動保存（データが変更されたとき）
+  // LocalStorageへの自動保存（データが変更されたとき）
   useEffect(() => {
-    CookieStorage.saveFixedEvents(demoFixedEvents)
+    LocalStorage.saveFixedEvents(demoFixedEvents)
   }, [demoFixedEvents])
 
   useEffect(() => {
-    CookieStorage.saveStudyBlocks(demoStudyBlocks)
+    LocalStorage.saveStudyBlocks(demoStudyBlocks)
   }, [demoStudyBlocks])
 
   useEffect(() => {
-    CookieStorage.saveLearningGoal(learningGoal)
+    LocalStorage.saveLearningGoal(learningGoal)
   }, [learningGoal])
 
   useEffect(() => {
-    CookieStorage.saveCountdownTargets(countdownTargets)
+    LocalStorage.saveCountdownTargets(countdownTargets)
   }, [countdownTargets])
 
   useEffect(() => {
-    CookieStorage.saveFixedEventExceptions(fixedEventExceptions)
+    LocalStorage.saveFixedEventExceptions(fixedEventExceptions)
   }, [fixedEventExceptions])
 
-  const loadFromCookies = () => {
-    const fixedEvents = CookieStorage.getFixedEvents()
-    const studyBlocks = CookieStorage.getStudyBlocks()
-    const learningGoal = CookieStorage.getLearningGoal()
-    const countdownTargets = CookieStorage.getCountdownTargets()
-    const exceptions = CookieStorage.getFixedEventExceptions()
+  const loadFromLocalStorage = () => {
+    const fixedEvents = LocalStorage.getFixedEvents()
+    const studyBlocks = LocalStorage.getStudyBlocks()
+    const learningGoal = LocalStorage.getLearningGoal()
+    const countdownTargets = LocalStorage.getCountdownTargets()
+    const exceptions = LocalStorage.getFixedEventExceptions()
     
     if (fixedEvents.length > 0) setDemoFixedEvents(fixedEvents)
     if (studyBlocks.length > 0) setDemoStudyBlocks(studyBlocks)
@@ -201,15 +201,15 @@ export default function HomePage() {
                 setCountdownTargets([])
                 setLearningGoal(null)
                 setFixedEventExceptions({})
-                // Cookieもクリア
-                CookieStorage.clearAll()
+                // LocalStorageもクリア
+                LocalStorage.clearAll()
               }}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               始める
             </button>
             <p className="text-sm text-gray-500 mt-4 text-center">
-              ※データはCookieに保存され、続きから利用できます
+              ※データはLocalStorageに保存され、続きから利用できます
             </p>
           </div>
         </div>
