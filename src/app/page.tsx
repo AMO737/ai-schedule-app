@@ -77,38 +77,43 @@ export default function HomePage() {
       // ユーザーID（デモの場合はdemo-user）
       const userId = user?.id || 'demo-user'
       
-      // 固定予定を取得
-      const { data: events } = await supabase
-        .from('fixed_events')
-        .select('*')
-        .eq('user_id', userId)
-        .order('day_of_week', { ascending: true })
-      
-      if (events) {
-        setDemoFixedEvents(events)
-      }
+      try {
+        // 固定予定を取得
+        const { data: events } = await supabase
+          .from('fixed_events')
+          .select('*')
+          .eq('user_id', userId)
+          .order('day_of_week', { ascending: true })
+        
+        if (events) {
+          setDemoFixedEvents(events)
+        }
 
-      // 学習ブロックを取得
-      const { data: blocks } = await supabase
-        .from('study_blocks')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: true })
-      
-      if (blocks) {
-        setDemoStudyBlocks(blocks)
-      }
+        // 学習ブロックを取得
+        const { data: blocks } = await supabase
+          .from('study_blocks')
+          .select('*')
+          .eq('user_id', userId)
+          .order('date', { ascending: true })
+        
+        if (blocks) {
+          setDemoStudyBlocks(blocks)
+        }
 
-      // 学習目標を取得
-      const { data: goals } = await supabase
-        .from('learning_goals')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1)
-        .single()
-      
-      if (goals) {
-        setLearningGoal(goals)
+        // 学習目標を取得
+        const { data: goals } = await supabase
+          .from('learning_goals')
+          .select('*')
+          .eq('user_id', userId)
+          .limit(1)
+          .single()
+        
+        if (goals) {
+          setLearningGoal(goals)
+        }
+      } catch (supabaseError) {
+        // Supabaseエラーは無視（デモモード）
+        console.log('Supabase not configured, using demo mode')
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -142,20 +147,17 @@ export default function HomePage() {
             </p>
             <button
               onClick={async () => {
-                try {
-                  const { error } = await supabase.auth.signInAnonymously()
-                  if (error) throw error
-                } catch (error) {
-                  console.error('Error signing in:', error)
-                  // エラーでもデモユーザーとして続行
-                }
+                // デモユーザーとして続行
+                const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
+                setUser(demoUser as any)
+                loadData()
               }}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               始める
             </button>
             <p className="text-sm text-gray-500 mt-4 text-center">
-              ※現在は匿名ログインです
+              ※データはローカルストレージに保存されます
             </p>
           </div>
         </div>
