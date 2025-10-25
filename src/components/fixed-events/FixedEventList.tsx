@@ -48,35 +48,8 @@ export function FixedEventList({ userId, fixedEvents: externalFixedEvents, setFi
       // 外部からfixedEventsが渡された場合はそれを使用
       setLoading(false)
     } else {
-      // 一時的にデモデータを使用
-      const demoEvents: FixedEvent[] = [
-        {
-          id: 'demo-event-1',
-          user_id: userId,
-          title: '授業',
-          day_of_week: 1, // 月曜日
-          start_time: '09:00',
-          end_time: '10:30',
-          color: '#3B82F6',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'demo-event-2',
-          user_id: userId,
-          title: 'バイト',
-          day_of_week: 3, // 水曜日
-          start_time: '18:00',
-          end_time: '22:00',
-          color: '#EF4444',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]
-      
-      setEvents(demoEvents)
+      // デモデータなし（空のリスト）
+      setEvents([])
       setLoading(false)
     }
   }, [userId, externalFixedEvents])
