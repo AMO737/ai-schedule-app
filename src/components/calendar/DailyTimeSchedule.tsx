@@ -47,6 +47,11 @@ export function DailyTimeSchedule({
 }: DailyTimeScheduleProps) {
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
+  const [idCounter, setIdCounter] = useState(0)
+  
+  const generateId = () => {
+    return `study-block-${Date.now()}-${idCounter}`
+  }
   
   // 30分おきのタイムスロットを生成
   const generateTimeSlots = (): TimeSlot[] => {
@@ -203,7 +208,7 @@ export function DailyTimeSchedule({
     try {
       // 学習ブロックとして追加
       const newStudyBlock: StudyBlock = {
-        id: Date.now().toString(),
+        id: generateId(),
         user_id: 'demo-user',
         subject: eventData.subject || '英語',
         date: selectedDate.toISOString().split('T')[0],
@@ -222,6 +227,9 @@ export function DailyTimeSchedule({
       if (onAddStudyBlockFromTimeSchedule) {
         onAddStudyBlockFromTimeSchedule(newStudyBlock)
       }
+      
+      // IDカウンターをインクリメント
+      setIdCounter(prev => prev + 1)
       
       console.log('学習ブロックを追加:', newStudyBlock)
     } catch (error) {
