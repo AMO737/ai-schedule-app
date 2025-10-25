@@ -1,0 +1,27 @@
+
+> ai-schedule-app@0.1.0 build
+> next build
+
+   ▲ Next.js 16.0.0 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.8s
+   Running TypeScript ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+page.tsx - showFixedEventForm: false
+page.tsx - selectedDate: null
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4) in 2.1s
+   Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
