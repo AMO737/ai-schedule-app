@@ -8,7 +8,7 @@ export default function EnvCheck() {
     fetch('/api/env-check')
       .then(r => r.json())
       .then(setApi)
-      .catch(() => setApi({ ok: false }))
+      .catch(() => setApi({ error: true }))
   }, [])
 
   return (
@@ -17,13 +17,11 @@ export default function EnvCheck() {
       <pre className="p-4 text-sm whitespace-pre-wrap bg-gray-100 rounded">
         {JSON.stringify(
           {
-            vercelEnv: process.env.NEXT_PUBLIC_VERCEL_ENV ?? '(none)',
             build: {
               inlineUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
               inlineAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-              commit: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? '(none)',
             },
-            runtimeApi: api,
+            runtime: api,
           },
           null,
           2

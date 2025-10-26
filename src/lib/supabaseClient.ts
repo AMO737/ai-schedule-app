@@ -1,12 +1,25 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-// ビルド時に確実に文字列へ置換されるよう、モジュールのトップレベルで静的参照
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+let client: SupabaseClient | null = null
 
-export const supabase = createClient(url, anon)
-
-// 後方互換性のための関数（既存コード用）
 export function getSupabase() {
-  return supabase
+  if (client) return client
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !anon) {
+    throw new Error('ENV_MISSING:NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  }
+
+  client = createClient(url, anon)
+  return client
 }
+
+// 後方互換性のため（使用されている場所でimport-time に呼ばれるとthrow するので注意）
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_, prop) {
+    const instance = getSupabase()
+    return (instance as any)[prop]
+  },
+})
