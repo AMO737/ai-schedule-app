@@ -27,6 +27,9 @@ type ScheduleState = {
   countdownTargets: CountdownTarget[]
   fixedEventExceptions: FixedEventExceptions
   
+  // ハイドレーション完了フラグ
+  hasHydrated: boolean
+  
   // アクション - 固定予定
   addFixedEvent: (event: FixedEvent) => void
   updateFixedEvent: (id: string, event: Partial<FixedEvent>) => void
@@ -55,6 +58,9 @@ type ScheduleState = {
   
   // クリア
   clearAll: () => void
+  
+  // ハイドレーション
+  setHasHydrated: (value: boolean) => void
 }
 
 export const useScheduleStore = create<ScheduleState>()(
@@ -66,6 +72,10 @@ export const useScheduleStore = create<ScheduleState>()(
       learningGoal: null,
       countdownTargets: [],
       fixedEventExceptions: {},
+      hasHydrated: false,
+      
+      // ハイドレーション
+      setHasHydrated: (value) => set({ hasHydrated: value }),
       
       // 固定予定
       addFixedEvent: (event) => set((s) => ({ fixedEvents: [...s.fixedEvents, event] })),
@@ -165,8 +175,14 @@ export const useScheduleStore = create<ScheduleState>()(
         return idbStorage
       }) : undefined,
       version: 1,
+      skipHydration: true,
       // 初期データ読み込み完了フラグ
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('Rehydration error:', error)
+          return
+        }
+        
         console.log("✅ Zustandストアのデータ読み込み完了")
         console.log("📊 読み込んだデータ:", {
           fixedEvents: state?.fixedEvents?.length || 0,
@@ -176,13 +192,18 @@ export const useScheduleStore = create<ScheduleState>()(
           exceptions: Object.keys(state?.fixedEventExceptions || {}).length
         })
         
-        // Cookieにも保存（IndexedDBのバックアップ）
-        if (state && typeof window !== 'undefined') {
-          fetch('/api/state', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: state })
-          }).catch(err => console.error('Cookie保存エラー:', err))
+        // ハイドレーション完了フラグを設定
+        if (state) {
+          state.setHasHydrated(true)
+          
+          // Cookieにも保存（IndexedDBのバックアップ）
+          if (typeof window !== 'undefined') {
+            fetch('/api/state', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ data: state })
+            }).catch(err => console.error('Cookie保存エラー:', err))
+          }
         }
       }
     }
@@ -191,19 +212,22 @@ export const useScheduleStore = create<ScheduleState>()(
 
 // ハイドレーション完了判定
 export const useHydrated = () => {
-  const [hasHydrated, setHasHydrated] = React.useState(false)
+  const hasHydrated = useScheduleStore((s) => s.hasHydrated)
   
   React.useEffect(() => {
-    const checkHydration = () => {
-      if (useScheduleStore.persist?.hasHydrated()) {
-        setHasHydrated(true)
-      } else {
-        // まだハイドレーション中の場合は少し待つ
-        setTimeout(checkHydration, 50)
+    if (typeof window !== 'undefined' && !hasHydrated) {
+      const rehydrate = async () => {
+        try {
+          await (useScheduleStore.persist as any).rehydrate()
+        } catch (error) {
+          console.error('Rehydration error:', error)
+          // エラーが起きてもハイドレーション完了とする
+          useScheduleStore.getState().setHasHydrated(true)
+        }
       }
+      rehydrate()
     }
-    checkHydration()
-  }, [])
+  }, [hasHydrated])
   
   return hasHydrated
 }
