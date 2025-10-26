@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { cookies } from "next/headers";
+import { reconstructCookieState } from "@/lib/dataBackup";
 // import { AuthProvider } from "@/components/auth/AuthProvider"; // 一時的にコメントアウト
 
 const geistSans = Geist({
@@ -18,16 +20,25 @@ export const metadata: Metadata = {
   description: "AIがあなたの学習スケジュールを自動で最適化します",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Cookieから状態を復元
+  const cookieStore = await cookies()
+  const cookieState = reconstructCookieState(cookieStore)
+  
   return (
     <html lang="ja">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__COOKIE_BACKUP__=${JSON.stringify(cookieState ?? null)};`,
+          }}
+        />
         {/* <AuthProvider> */}
           {children}
         {/* </AuthProvider> */}

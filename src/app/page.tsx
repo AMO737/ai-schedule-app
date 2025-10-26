@@ -77,6 +77,35 @@ export default function HomePage() {
     checkUser()
   }, [])
 
+  // Cookieからの復元（IndexedDBがない場合のみ）
+  useEffect(() => {
+    if (!hydrated) return
+    
+    const restoreFromCookie = async () => {
+      try {
+        // IndexedDBにデータがあるか確認
+        const idbStorage = (await import('@/lib/idbStorage')).idbStorage
+        const exists = await idbStorage.getItem('ai-schedule-app:v1')
+        
+        // IndexedDBにデータがない場合のみCookieから復元
+        if (!exists && typeof window !== 'undefined' && (window as any).__COOKIE_BACKUP__) {
+          const cookieBackup = (window as any).__COOKIE_BACKUP__
+          console.log('🍪 Cookieからデータを復元します:', cookieBackup)
+          
+          // Zustandストアの状態を置き換え
+          useScheduleStore.setState(cookieBackup, false)
+          
+          // 再度ハイドレーション完了を通知
+          useScheduleStore.getState().setHasHydrated(true)
+        }
+      } catch (error) {
+        console.error('Cookie復元エラー:', error)
+      }
+    }
+    
+    restoreFromCookie()
+  }, [hydrated])
+
   // Zustandストアのハイドレーション完了を待つ
   if (!hydrated) {
     return (
