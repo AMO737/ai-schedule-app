@@ -216,11 +216,14 @@ export const useHydrated = () => {
   
   React.useEffect(() => {
     if (typeof window !== 'undefined' && !hasHydrated) {
+      console.log('🔄 明示的に persist.rehydrate() を呼び出します')
       const rehydrate = async () => {
         try {
+          const startTime = Date.now()
           await (useScheduleStore.persist as any).rehydrate()
+          console.log(`✅ persist.rehydrate() 完了 (${Date.now() - startTime}ms)`)
         } catch (error) {
-          console.error('Rehydration error:', error)
+          console.error('❌ Rehydration error:', error)
           // エラーが起きてもハイドレーション完了とする
           useScheduleStore.getState().setHasHydrated(true)
         }
