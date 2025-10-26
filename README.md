@@ -39,19 +39,33 @@ npm install
 `.env.local`ファイルを作成し、以下の環境変数を設定してください：
 
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Supabase Configuration (Required)
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
 # Google OAuth Configuration
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CLIENT_ID=<google-client-id>
+GOOGLE_CLIENT_SECRET=<google-client-secret>
 
 # App Configuration
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_SECRET=<random-secret>
 ```
+
+**⚠️ 重要**: 
+- Supabase URLは`https://`で始まり、末尾のスラッシュなしで指定してください
+- プレースホルダー値（`placeholder.supabase.co`、`your-project`など）は使用できません。ビルド時にエラーになります
+- Vercelでデプロイする場合、本番環境とプレビュー環境の両方で環境変数を設定してください
+
+#### Vercel環境変数の設定方法
+1. Vercel Dashboard → プロジェクト → Settings → Environment Variables
+2. 以下の変数を Production と Preview の両方に追加：
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+3. 環境変数を変更したら **必ず再デプロイ**してください（Next.jsはビルド時に環境変数を焼き込みます）
 
 ### 4. Supabaseのセットアップ
 
