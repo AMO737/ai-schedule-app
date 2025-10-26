@@ -1,36 +1,35 @@
-import { NextResponse } from 'next/server'
-import { ENV } from '@/lib/env'
+import { safeEnv } from '@/lib/env'
 
 /**
  * Debug API endpoint to check Supabase connection
  * Returns connection status without exposing sensitive data
+ * Safe to call even if environment variables are not set
  */
 export async function GET() {
-  try {
-    const url = ENV.SUPABASE_URL
-
-    // Try to connect to Supabase REST endpoint
-    const healthCheckUrl = `${url}/rest/v1/`
-    
-    const response = await fetch(healthCheckUrl, {
-      method: 'HEAD',
-      headers: {
-        'apikey': ENV.SUPABASE_ANON_KEY,
-      },
+  const env = safeEnv()
+  
+  if (!env.ok || !env.URL) {
+    return Response.json({ 
+      ok: false, 
+      reason: 'MISSING_ENV', 
+      url: env.URL ?? null 
     })
+  }
 
-    const ok = response.ok || response.status === 404 // 404 is also fine, means endpoint exists
-
-    return NextResponse.json({
-      url,
-      ok,
-      reason: ok ? undefined : `HTTP ${response.status}: ${response.statusText}`,
+  try {
+    const res = await fetch(`${env.URL}/auth/v1/health`, { 
+      method: 'GET', 
+      cache: 'no-store' 
+    })
+    return Response.json({ 
+      ok: res.ok, 
+      url: env.URL 
     })
   } catch (error) {
-    return NextResponse.json({
-      url: ENV.SUPABASE_URL,
-      ok: false,
-      reason: error instanceof Error ? error.message : 'Unknown error',
+    return Response.json({ 
+      ok: false, 
+      reason: 'FETCH_FAILED', 
+      url: env.URL 
     })
   }
 }
