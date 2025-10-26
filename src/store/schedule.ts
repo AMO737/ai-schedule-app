@@ -175,6 +175,15 @@ export const useScheduleStore = create<ScheduleState>()(
           countdownTargets: state?.countdownTargets?.length || 0,
           exceptions: Object.keys(state?.fixedEventExceptions || {}).length
         })
+        
+        // Cookieにも保存（IndexedDBのバックアップ）
+        if (state && typeof window !== 'undefined') {
+          fetch('/api/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: state })
+          }).catch(err => console.error('Cookie保存エラー:', err))
+        }
       }
     }
   )
