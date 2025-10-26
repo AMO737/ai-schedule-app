@@ -5,13 +5,8 @@ const Raw = {
   ANON: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 }
 
-// デバッグログ（development時のみ）
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.debug('[ENV]', Raw.URL ? 'URL:OK' : 'URL:MISSING')
-}
-
 const Schema = z.object({
-  URL: z.string().url().startsWith('https://').endsWith('.supabase.co').optional(),
+  URL: z.string().url().startsWith('https://').optional(),
   ANON: z.string().min(10).optional(),
 })
 
@@ -24,10 +19,13 @@ export function safeEnv() {
   }
 }
 
-export function requireEnv() {
-  const r = Schema.parse(Raw) // throws if invalid
-  if (!r.URL || !r.ANON) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required')
+export function requireEnvOrMessage() {
+  const { ok, URL, ANON } = safeEnv()
+  if (!ok || !URL || !ANON) {
+    return { 
+      ok: false, 
+      message: '環境変数が設定されていません。NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY が必要です。' 
+    } as const
   }
-  return { URL: r.URL, ANON: r.ANON }
+  return { ok: true, URL, ANON } as const
 }

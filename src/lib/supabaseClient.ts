@@ -1,10 +1,20 @@
-import { createClient } from '@supabase/supabase-js'
-import { requireEnv } from './env'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { requireEnvOrMessage } from './env'
 
-/**
- * Unified Supabase client
- * All Supabase operations should use this client instance
- * Throws if environment variables are not set
- */
-const { URL, ANON } = requireEnv()
-export const supabase = createClient(URL, ANON)
+let client: SupabaseClient | null = null
+
+export function getSupabase() {
+  if (client) return client
+  const cfg = requireEnvOrMessage()
+  if (!cfg.ok) throw new Error(cfg.message)
+  client = createClient(cfg.URL, cfg.ANON)
+  return client
+}
+
+// 後方互換性のため
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_, prop) {
+    const instance = getSupabase()
+    return (instance as any)[prop]
+  }
+})

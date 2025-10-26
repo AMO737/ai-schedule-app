@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { requireEnv } from '@/lib/env'
+import { requireEnvOrMessage } from '@/lib/env'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -9,10 +9,13 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = await cookies()
-    const { URL, ANON } = requireEnv()
+    const cfg = requireEnvOrMessage()
+    if (!cfg.ok) {
+      return NextResponse.json({ error: cfg.message }, { status: 500 })
+    }
     const supabase = createServerClient(
-      URL,
-      ANON,
+      cfg.URL,
+      cfg.ANON,
       {
         cookies: {
           get(name: string) {
