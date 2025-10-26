@@ -57,24 +57,6 @@ export default function HomePage() {
   console.log('page.tsx - showFixedEventForm:', showFixedEventForm)
   console.log('page.tsx - selectedDate:', selectedDate)
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
-  // Zustandストアのハイドレーション完了を待つ
-  if (!hydrated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    )
-  }
-
-
-
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -89,6 +71,22 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  // Zustandストアのハイドレーション完了を待つ
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    )
   }
 
 
