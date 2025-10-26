@@ -8,10 +8,11 @@ export interface AuthUser {
 
 export class AuthService {
   static async signInWithGoogle() {
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '/auth/callback'
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo
       }
     })
     

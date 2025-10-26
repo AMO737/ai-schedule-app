@@ -5,6 +5,11 @@ const Raw = {
   ANON: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 }
 
+// デバッグログ（development時のみ）
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.debug('[ENV]', Raw.URL ? 'URL:OK' : 'URL:MISSING')
+}
+
 const Schema = z.object({
   URL: z.string().url().startsWith('https://').endsWith('.supabase.co').optional(),
   ANON: z.string().min(10).optional(),

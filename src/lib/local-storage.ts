@@ -10,6 +10,7 @@ export const LocalStorage = {
   // 固定予定を保存
   saveFixedEvents(events: any[]) {
     try {
+      if (typeof window === 'undefined') return
       localStorage.setItem(STORAGE_KEYS.FIXED_EVENTS, JSON.stringify(events))
       console.log('LocalStorage saved - FixedEvents:', events.length)
     } catch (error) {
@@ -20,6 +21,7 @@ export const LocalStorage = {
   // 固定予定を取得
   getFixedEvents(): any[] {
     try {
+      if (typeof window === 'undefined') return []
       const data = localStorage.getItem(STORAGE_KEYS.FIXED_EVENTS)
       if (data) {
         const parsed = JSON.parse(data)
@@ -37,6 +39,7 @@ export const LocalStorage = {
   // 学習ブロックを保存
   saveStudyBlocks(blocks: any[]) {
     try {
+      if (typeof window === 'undefined') return
       localStorage.setItem(STORAGE_KEYS.STUDY_BLOCKS, JSON.stringify(blocks))
       console.log('LocalStorage saved - StudyBlocks:', blocks.length)
     } catch (error) {
@@ -47,6 +50,7 @@ export const LocalStorage = {
   // 学習ブロックを取得
   getStudyBlocks(): any[] {
     try {
+      if (typeof window === 'undefined') return []
       const data = localStorage.getItem(STORAGE_KEYS.STUDY_BLOCKS)
       if (data) {
         const parsed = JSON.parse(data)
@@ -64,6 +68,7 @@ export const LocalStorage = {
   // 学習目標を保存
   saveLearningGoal(goal: any) {
     try {
+      if (typeof window === 'undefined') return
       if (goal) {
         localStorage.setItem(STORAGE_KEYS.LEARNING_GOAL, JSON.stringify(goal))
         console.log('LocalStorage saved - LearningGoal:', goal.id || 'new')
@@ -79,6 +84,7 @@ export const LocalStorage = {
   // 学習目標を取得
   getLearningGoal(): any | null {
     try {
+      if (typeof window === 'undefined') return null
       const data = localStorage.getItem(STORAGE_KEYS.LEARNING_GOAL)
       if (data) {
         const parsed = JSON.parse(data)
@@ -96,6 +102,7 @@ export const LocalStorage = {
   // カウントダウン目標を保存
   saveCountdownTargets(targets: any[]) {
     try {
+      if (typeof window === 'undefined') return
       localStorage.setItem(STORAGE_KEYS.COUNTDOWN_TARGETS, JSON.stringify(targets))
       console.log('LocalStorage saved - CountdownTargets:', targets.length)
     } catch (error) {
@@ -106,6 +113,7 @@ export const LocalStorage = {
   // カウントダウン目標を取得
   getCountdownTargets(): any[] {
     try {
+      if (typeof window === 'undefined') return []
       const data = localStorage.getItem(STORAGE_KEYS.COUNTDOWN_TARGETS)
       if (data) {
         const parsed = JSON.parse(data)
@@ -123,6 +131,7 @@ export const LocalStorage = {
   // 固定予定の例外を保存
   saveFixedEventExceptions(exceptions: { [key: string]: string[] | undefined }) {
     try {
+      if (typeof window === 'undefined') return
       localStorage.setItem(STORAGE_KEYS.FIXED_EVENT_EXCEPTIONS, JSON.stringify(exceptions))
       console.log('LocalStorage saved - FixedEventExceptions:', Object.keys(exceptions).length)
     } catch (error) {
@@ -133,6 +142,7 @@ export const LocalStorage = {
   // 固定予定の例外を取得
   getFixedEventExceptions(): { [key: string]: string[] | undefined } {
     try {
+      if (typeof window === 'undefined') return {}
       const data = localStorage.getItem(STORAGE_KEYS.FIXED_EVENT_EXCEPTIONS)
       if (data) {
         const parsed = JSON.parse(data)
@@ -150,6 +160,7 @@ export const LocalStorage = {
   // すべてのデータをクリア
   clearAll() {
     try {
+      if (typeof window === 'undefined') return
       Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key)
       })
