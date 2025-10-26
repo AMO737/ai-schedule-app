@@ -3,6 +3,7 @@ import React from "react"
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { FixedEvent, StudyBlock, LearningGoal } from "@/types"
+import { idbStorage } from "@/lib/idbStorage"
 
 // カウントダウンターゲット用の型
 export interface CountdownTarget {
@@ -160,34 +161,8 @@ export const useScheduleStore = create<ScheduleState>()(
           })
         }
         
-        const storage = localStorage
-        
-        // エラーハンドリング付きラッパー
-        return {
-          getItem: (name: string) => {
-            try {
-              return storage.getItem(name)
-            } catch (error) {
-              console.error('localStorage.getItem エラー:', error)
-              return null
-            }
-          },
-          setItem: (name: string, value: string) => {
-            try {
-              storage.setItem(name, value)
-              console.log('💾 データを保存しました:', name, value.slice(0, 100))
-            } catch (error) {
-              console.error('localStorage.setItem エラー:', error)
-            }
-          },
-          removeItem: (name: string) => {
-            try {
-              storage.removeItem(name)
-            } catch (error) {
-              console.error('localStorage.removeItem エラー:', error)
-            }
-          }
-        }
+        // IndexedDB を使用
+        return idbStorage
       }) : undefined,
       version: 1,
       // 初期データ読み込み完了フラグ
