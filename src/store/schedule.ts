@@ -1,4 +1,5 @@
 "use client"
+import React from "react"
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { FixedEvent, StudyBlock, LearningGoal } from "@/types"
@@ -151,11 +152,54 @@ export const useScheduleStore = create<ScheduleState>()(
     }),
     {
       name: "ai-schedule-app:v1",
-      storage: typeof window !== "undefined" ? createJSONStorage(() => localStorage) : undefined,
+      storage: typeof window !== "undefined" ? createJSONStorage(() => {
+        // ブラウザでストレージの永続化を要求
+        if ('navigator' in window && 'storage' in navigator && 'persist' in navigator.storage) {
+          navigator.storage.persist().catch(() => {
+            console.log('ストレージの永続化リクエストは無視されました')
+          })
+        }
+        
+        const storage = localStorage
+        
+        // エラーハンドリング付きラッパー
+        return {
+          getItem: (name: string) => {
+            try {
+              return storage.getItem(name)
+            } catch (error) {
+              console.error('localStorage.getItem エラー:', error)
+              return null
+            }
+          },
+          setItem: (name: string, value: string) => {
+            try {
+              storage.setItem(name, value)
+              console.log('💾 データを保存しました:', name, value.slice(0, 100))
+            } catch (error) {
+              console.error('localStorage.setItem エラー:', error)
+            }
+          },
+          removeItem: (name: string) => {
+            try {
+              storage.removeItem(name)
+            } catch (error) {
+              console.error('localStorage.removeItem エラー:', error)
+            }
+          }
+        }
+      }) : undefined,
       version: 1,
       // 初期データ読み込み完了フラグ
       onRehydrateStorage: () => (state) => {
-        console.log("✅ Zustandストアのデータ読み込み完了:", state)
+        console.log("✅ Zustandストアのデータ読み込み完了")
+        console.log("📊 読み込んだデータ:", {
+          fixedEvents: state?.fixedEvents?.length || 0,
+          studyBlocks: state?.studyBlocks?.length || 0,
+          learningGoal: state?.learningGoal ? 'あり' : 'なし',
+          countdownTargets: state?.countdownTargets?.length || 0,
+          exceptions: Object.keys(state?.fixedEventExceptions || {}).length
+        })
       }
     }
   )
@@ -163,6 +207,19 @@ export const useScheduleStore = create<ScheduleState>()(
 
 // ハイドレーション完了判定
 export const useHydrated = () => {
-  const hasHydrated = useScheduleStore.persist?.hasHydrated ?? (() => true)
-  return hasHydrated()
+  const [hasHydrated, setHasHydrated] = React.useState(false)
+  
+  React.useEffect(() => {
+    const checkHydration = () => {
+      if (useScheduleStore.persist?.hasHydrated()) {
+        setHasHydrated(true)
+      } else {
+        // まだハイドレーション中の場合は少し待つ
+        setTimeout(checkHydration, 50)
+      }
+    }
+    checkHydration()
+  }, [])
+  
+  return hasHydrated
 }
