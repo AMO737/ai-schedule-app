@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { StudyBlock } from '@/types'
 import { Button } from '@/components/ui/button'
+import { StudyBlockService } from '@/lib/study-blocks'
 
 interface TodayScheduleProps {
   userId: string
@@ -13,25 +14,47 @@ export function TodaySchedule({ userId }: TodayScheduleProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // デモデータなし
-    setBlocks([])
-    setLoading(false)
+    const fetchTodayBlocks = async () => {
+      try {
+        const today = new Date()
+        const data = await StudyBlockService.getStudyBlocks(userId, today)
+        setBlocks(data)
+      } catch (error) {
+        console.error('Failed to fetch today blocks:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (userId) {
+      fetchTodayBlocks()
+    }
   }, [userId])
 
   const handleComplete = async (blockId: string) => {
-    setBlocks(prev => prev.map(block => 
-      block.id === blockId 
-        ? { ...block, is_completed: true, completed_at: new Date().toISOString() }
-        : block
-    ))
+    try {
+      await StudyBlockService.markStudyBlockCompleted(blockId)
+      setBlocks(prev => prev.map(block => 
+        block.id === blockId 
+          ? { ...block, is_completed: true, completed_at: new Date().toISOString() }
+          : block
+      ))
+    } catch (error) {
+      console.error('Failed to mark block as completed:', error)
+    }
   }
 
   const handleSkip = async (blockId: string) => {
-    setBlocks(prev => prev.map(block => 
-      block.id === blockId 
-        ? { ...block, is_skipped: true }
-        : block
-    ))
+    try {
+      await StudyBlockService.markStudyBlockSkipped(blockId)
+      setBlocks(prev => prev.map(block => 
+        block.id === blockId 
+          ? { ...block, is_skipped: true }
+          : block
+      ))
+    } catch (error) {
+      console.error('Failed to mark block as skipped:', error)
+    }
   }
 
   const formatTime = (time: string) => {
