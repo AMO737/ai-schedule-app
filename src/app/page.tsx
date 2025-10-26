@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { useScheduleStore, useHydrated } from '@/store/schedule'
 import { FixedEventForm } from '@/components/fixed-events/FixedEventForm'
 import { FixedEventList } from '@/components/fixed-events/FixedEventList'
@@ -17,8 +18,12 @@ import { StudyBlockForm } from '@/components/study-blocks/StudyBlockForm'
 import { DailyTimeSchedule } from '@/components/calendar/DailyTimeSchedule'
 import { Button } from '@/components/ui/button'
 import { NotificationSystem } from '@/components/notifications/NotificationSystem'
+import { LoginButton } from '@/components/auth/LoginButton'
 
 export default function HomePage() {
+  // 認証状態
+  const { user, loading, signIn, signOut } = useAuth()
+  
   // Zustandストアから状態を取得
   const hydrated = useHydrated()
   const fixedEvents = useScheduleStore(state => state.fixedEvents)
@@ -38,8 +43,6 @@ export default function HomePage() {
   const clearAll = useScheduleStore(state => state.clearAll)
   
   // UIの状態管理
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
   const [showFixedEventForm, setShowFixedEventForm] = useState(false)
   const [showLearningGoalForm, setShowLearningGoalForm] = useState(false)
   const [editingGoal, setEditingGoal] = useState<any>(null)
@@ -56,26 +59,6 @@ export default function HomePage() {
   
   console.log('page.tsx - showFixedEventForm:', showFixedEventForm)
   console.log('page.tsx - selectedDate:', selectedDate)
-
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      
-      // 認証状態の変更をリッスン
-      supabase.auth.onAuthStateChange((event, session) => {
-        setUser(session?.user ?? null)
-      })
-    } catch (error) {
-      console.error('Error checking user:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    checkUser()
-  }, [])
 
   // Cookieからの復元（IndexedDBがない場合のみ）
   useEffect(() => {
@@ -149,30 +132,21 @@ export default function HomePage() {
   }
 
   if (!user) {
-  return (
+    return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center">
               学習スケジュール管理
-          </h1>
+            </h1>
             <p className="text-gray-600 mb-8 text-center">
+              Googleアカウントでログインして
+              <br />
               効率的に学習を進めましょう
             </p>
-            <button
-              onClick={async () => {
-                // デモユーザーとして続行（データは空）
-                const demoUser = { id: 'demo-user', user_metadata: { name: 'デモユーザー' } }
-                setUser(demoUser as any)
-                // Zustandストアをクリア
-                clearAll()
-              }}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              始める
-            </button>
+            <LoginButton />
             <p className="text-sm text-gray-500 mt-4 text-center">
-              ※データは保存され、続きから利用できます
+              ※ログインすると、どこからでも続きから利用できます
             </p>
           </div>
         </div>
@@ -205,6 +179,12 @@ export default function HomePage() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   {showCalendar ? 'ダッシュボード' : 'カレンダー'}
+                </button>
+                <button
+                  onClick={signOut}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  ログアウト
                 </button>
               </div>
             </div>

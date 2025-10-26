@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { reconstructCookieState } from "@/lib/dataBackup";
-// import { AuthProvider } from "@/components/auth/AuthProvider"; // 一時的にコメントアウト
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,9 +39,9 @@ export default async function RootLayout({
             __html: `window.__COOKIE_BACKUP__=${JSON.stringify(cookieState ?? null)};`,
           }}
         />
-        {/* <AuthProvider> */}
+        <AuthProvider>
           {children}
-        {/* </AuthProvider> */}
+        </AuthProvider>
       </body>
     </html>
   );
