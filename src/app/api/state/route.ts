@@ -4,26 +4,26 @@ import { NextResponse } from "next/server"
 const PREFIX = "state_v1_"
 const MAX_CHUNK = 3500 // 4KB対策：余裕をもって
 
-async function readChunks(jar: Awaited<ReturnType<typeof cookies>>) {
+async function readChunks(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   let parts: string[] = []
   for (let i = 0; i < 50; i++) { // 最大50個=約170KB目安
-    const v = jar.get(PREFIX + i)?.value
+    const v = cookieStore.get(PREFIX + i)?.value
     if (!v) break
     parts.push(v)
   }
   return parts.join("")
 }
 
-async function writeChunks(jar: Awaited<ReturnType<typeof cookies>>, b64: string) {
+async function writeChunks(cookieStore: Awaited<ReturnType<typeof cookies>>, b64: string) {
   // 既存削除（多めに掃除）
   for (let i = 0; i < 50; i++) {
-    await jar.set(PREFIX + i, "", { path: "/", maxAge: 0 })
+    cookieStore.set(PREFIX + i, "", { path: "/", maxAge: 0 })
   }
   // 分割書き込み
   let idx = 0
   for (let p = 0; p < b64.length; p += MAX_CHUNK) {
     const chunk = b64.slice(p, p + MAX_CHUNK)
-    await jar.set(PREFIX + idx, chunk, {
+    cookieStore.set(PREFIX + idx, chunk, {
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production', 
       sameSite: "lax" as const,
@@ -36,8 +36,8 @@ async function writeChunks(jar: Awaited<ReturnType<typeof cookies>>, b64: string
 
 export async function GET() {
   try {
-    const jar = await cookies()
-    const b64 = await readChunks(jar)
+    const cookieStore = await cookies()
+    const b64 = await readChunks(cookieStore)
     if (!b64) return NextResponse.json({ ok: true, data: null })
     
     const json = Buffer.from(b64, "base64").toString("utf8")
@@ -51,7 +51,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const jar = await cookies()
+    const cookieStore = await cookies()
     const body = await req.json().catch(() => null)
     
     if (!body || typeof body !== "object") {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     // body は { data: 任意のオブジェクト } を想定
     const json = JSON.stringify(body.data ?? null)
     const b64 = Buffer.from(json, "utf8").toString("base64")
-    await writeChunks(jar, b64)
+    await writeChunks(cookieStore, b64)
     
     return NextResponse.json({ ok: true })
   } catch (error) {
