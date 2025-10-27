@@ -163,11 +163,11 @@ export default function HomePage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {getGreeting()}
-              </h1>
+          </h1>
                 <p className="text-gray-800 mt-2">
                   今日も効率的に学習を進めましょう
-                </p>
-              </div>
+          </p>
+        </div>
               <div className="flex space-x-2">
                 <NotificationSystem
                   fixedEvents={fixedEvents}
