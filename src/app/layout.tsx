@@ -4,6 +4,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import { reconstructCookieState } from "@/lib/dataBackup";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import BootGate from "@/components/BootGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,9 @@ export default async function RootLayout({
           }}
         />
         <AuthProvider>
-          {children}
+          <BootGate>
+            {children}
+          </BootGate>
         </AuthProvider>
       </body>
     </html>
