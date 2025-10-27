@@ -40,10 +40,15 @@ export default function AuthCallback() {
 
         if (accessToken) {
           setStatus('トークンからセッションを設定中...')
-          console.log('[auth/callback] Consuming hash via getSessionFromUrl...')
+          console.log('[auth/callback] Setting session from access_token...')
 
-          // Supabaseの公式パーサでハッシュからセッションを保存
-          const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
+          const refreshToken = hashParams.get('refresh_token')
+          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
+
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          })
 
           if (error) {
             console.error('[auth/callback] Session error:', error)

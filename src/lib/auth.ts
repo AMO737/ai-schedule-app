@@ -18,8 +18,6 @@ export class AuthService {
       provider: 'google',
       options: {
         redirectTo,
-        // Force PKCE/code flow to avoid hash token handling issues
-        flowType: 'pkce',
         // Ensure refresh_token issuance and explicit consent when needed
         queryParams: {
           prompt: 'consent',
