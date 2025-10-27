@@ -16,8 +16,8 @@ export function getSupabase() {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      // コールバックで明示的に処理するため自動検出は無効化
-      detectSessionInUrl: false,
+      detectSessionInUrl: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     },
   })
   return client
