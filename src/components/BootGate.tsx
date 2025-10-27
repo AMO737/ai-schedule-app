@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useFlags } from '@/hooks/useFlags'
+import { useSw } from '@/hooks/useSw'
+import { useReset } from '@/hooks/useReset'
+import { bootAuth } from '@/lib/authBoot'
+import { initStorage } from '@/lib/storage'
 import { useHydrated } from '@/store/schedule'
 
 export default function BootGate({ children }: { children: React.ReactNode }) {
@@ -10,6 +14,9 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
   const [warn, setWarn] = useState<string | null>(null)
 
+  useReset()
+  useSw()
+
   useEffect(() => {
     let stale = false
 
@@ -17,48 +24,48 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
       try {
         if (debug) console.log('[boot] start', { safe })
 
-        // Service Worker登録（safeモードではスキップ）
-        if (safe) {
-          if (debug) console.log('[boot] SW skipped (safe mode)')
-        } else if ('serviceWorker' in navigator && typeof window !== 'undefined') {
-          try {
-            const registration = await navigator.serviceWorker.register('/sw.js')
-            if (debug) console.log('[boot] SW ok', registration.scope)
-          } catch (e) {
-            console.warn('[boot] SW fail', e)
-          }
+        // Storage初期化
+        try {
+          await initStorage()
+          if (debug) console.log('[boot] Storage initialized')
+        } catch (e) {
+          console.warn('[boot] Storage init failed', e)
         }
 
-        // Zustandストアのハイドレーション完了を待つ（タイムアウト付き）
-        const hydratePromise = new Promise<void>((resolve) => {
-          if (hasHydrated) {
-            resolve()
-            return
-          }
+        // Auth初期化
+        try {
+          await bootAuth()
+          if (debug) console.log('[boot] Auth initialized')
+        } catch (e) {
+          console.warn('[boot] Auth init failed', e)
+        }
 
-          const checkInterval = setInterval(() => {
-            if (hasHydrated) {
+        // Zustandストアのハイドレーション完了を待つ
+        if (!hasHydrated) {
+          const hydratePromise = new Promise<void>(resolve => {
+            const checkInterval = setInterval(() => {
+              if (hasHydrated) {
+                clearInterval(checkInterval)
+                resolve()
+              }
+            }, 100)
+
+            setTimeout(() => {
               clearInterval(checkInterval)
+              console.warn('[boot] Hydration timeout, continuing anyway')
               resolve()
-            }
-          }, 100)
+            }, 3000)
+          })
 
-          // タイムアウト: 3秒
-          setTimeout(() => {
-            clearInterval(checkInterval)
-            console.warn('[boot] Hydration timeout, continuing anyway')
-            resolve()
-          }, 3000)
-        })
-
-        await hydratePromise
+          await hydratePromise
+        }
 
         if (debug) console.log('[boot] complete')
         if (!stale) setReady(true)
       } catch (e) {
         console.error('[boot] fail', e)
         if (!stale) {
-          setWarn('接続が不安定です。オフラインモードで続行します。')
+          setWarn('接続が不安定です。オフラインで続行します。')
           setReady(true)
         }
       }
@@ -69,7 +76,7 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
     // 5秒タイムアウト
     const t = setTimeout(() => {
       if (!ready) {
-        setWarn('読み込みに時間がかかっています。再読み込みまたは?safe=1をお試しください。')
+        setWarn('読み込みが長いです。?safe=1 を試すか、?reset=1 でリセットしてください。')
         setReady(true)
       }
     }, 5000)
@@ -94,7 +101,7 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       {warn && (
-        <div className="m-3 rounded-xl bg-yellow-50 border border-yellow-200 p-3 text-sm text-center">
+        <div className="m-3 rounded-xl bg-yellow-50 border border-yellow-200 p-3 text-sm">
           {warn}
         </div>
       )}

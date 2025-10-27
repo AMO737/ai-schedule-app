@@ -1,9 +1,11 @@
 'use client'
-import { useMemo } from 'react'
 
 export function useFlags() {
-  const sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const debug = !!sp?.get('debug')
-  const safe = !!sp?.get('safe')
-  return useMemo(() => ({ debug, safe }), [debug, safe])
+  if (typeof window === 'undefined') return { debug: false, safe: false, reset: false }
+  const sp = new URLSearchParams(window.location.search)
+  return {
+    debug: sp.has('debug'),
+    safe: sp.has('safe'),
+    reset: sp.has('reset'),
+  }
 }
