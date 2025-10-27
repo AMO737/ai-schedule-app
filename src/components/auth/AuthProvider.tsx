@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { AuthService, AuthUser } from '@/lib/auth'
+import { withTimeout } from '@/lib/timeout'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -17,11 +18,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
-    AuthService.getCurrentUser().then((user) => {
-      setUser(user)
-      setLoading(false)
-    })
+    // タイムアウト付きで初期セッション取得
+    withTimeout(
+      AuthService.getCurrentUser(),
+      4000,
+      'getCurrentUser'
+    )
+      .then((user) => {
+        setUser(user)
+        setLoading(false)
+      })
+      .catch((e) => {
+        console.warn('[AuthProvider] getCurrentUser timeout/failed', e)
+        setUser(null)
+        setLoading(false)
+      })
 
     // Listen for auth changes
     const { data: { subscription } } = AuthService.onAuthStateChange((user) => {
@@ -70,4 +81,3 @@ export function useAuth() {
   }
   return context
 }
-
