@@ -17,6 +17,7 @@ export default function AuthCallback() {
     const hash = typeof window !== 'undefined' ? window.location.hash : ''
     const hashParams = new URLSearchParams(hash.substring(1))
     const accessToken = hashParams.get('access_token')
+    const errorDescription = hashParams.get('error_description')
     const code = sp.get('code')
 
     console.log('[auth/callback] hash:', hash.substring(0, 100))
@@ -30,17 +31,19 @@ export default function AuthCallback() {
         const supabase = getSupabase()
         console.log('[auth/callback] Got Supabase client')
 
+        if (errorDescription) {
+          console.error('[auth/callback] Provider error:', errorDescription)
+          setStatus(`エラー: ${errorDescription}`)
+          setTimeout(() => router.replace('/'), 5000)
+          return
+        }
+
         if (accessToken) {
           setStatus('トークンからセッションを設定中...')
-          console.log('[auth/callback] Setting session from access_token...')
-          
-          const refreshToken = hashParams.get('refresh_token')
-          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
+          console.log('[auth/callback] Consuming hash via getSessionFromUrl...')
 
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          })
+          // Supabaseの公式パーサでハッシュからセッションを保存
+          const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
 
           if (error) {
             console.error('[auth/callback] Session error:', error)
@@ -59,8 +62,9 @@ export default function AuthCallback() {
         } else if (code) {
           setStatus('コードをセッションに交換中...')
           console.log('[auth/callback] Exchanging code for session...')
-          
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+          // Exchange PKCE code from query param
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code!)
 
           if (error) {
             console.error('[auth/callback] Exchange error:', error)
@@ -88,10 +92,18 @@ export default function AuthCallback() {
           return
         }
 
-        // 成功した場合、少し待ってからリダイレクト
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // 成功確認後、少し待ってからリダイレクト
+        await new Promise(resolve => setTimeout(resolve, 500))
+        try {
+          const s = await supabase.auth.getSession()
+          console.log('[auth/callback] Session check after set/exchange:', !!s.data.session)
+        } catch {}
         console.log('[auth/callback] Redirecting to home (success)')
         router.replace('/')
+        // Fallback in case router is stuck
+        if (typeof window !== 'undefined') {
+          setTimeout(() => { window.location.replace('/') }, 1500)
+        }
       } catch (e) {
         console.error('[auth/callback] Exception:', e)
         setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)

@@ -17,7 +17,14 @@ export class AuthService {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo
+        redirectTo,
+        // Force PKCE/code flow to avoid hash token handling issues
+        flowType: 'pkce',
+        // Ensure refresh_token issuance and explicit consent when needed
+        queryParams: {
+          prompt: 'consent',
+          access_type: 'offline'
+        }
       }
     })
     

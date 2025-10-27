@@ -12,7 +12,14 @@ export function getSupabase() {
     throw new Error('ENV_MISSING:NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY')
   }
 
-  client = createClient(url, anon)
+  client = createClient(url, anon, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      // コールバックで明示的に処理するため自動検出は無効化
+      detectSessionInUrl: false,
+    },
+  })
   return client
 }
 

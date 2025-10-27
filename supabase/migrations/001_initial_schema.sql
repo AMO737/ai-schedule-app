@@ -208,3 +208,5 @@ CREATE TRIGGER update_weekly_progress_updated_at BEFORE UPDATE ON public.weekly_
 CREATE TRIGGER update_notification_settings_updated_at BEFORE UPDATE ON public.notification_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+
+
