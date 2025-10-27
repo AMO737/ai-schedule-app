@@ -40,29 +40,11 @@ export default function AuthCallback() {
 
         if (accessToken) {
           setStatus('トークンからセッションを設定中...')
-          console.log('[auth/callback] Setting session from access_token...')
-
-          const refreshToken = hashParams.get('refresh_token')
-          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
-
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          })
-
-          if (error) {
-            console.error('[auth/callback] Session error:', error)
-            setStatus(`エラー: ${error.message}`)
-            
-            // 5秒後にホームにリダイレクト
-            setTimeout(() => {
-              console.log('[auth/callback] Redirecting to home after error')
-              router.replace('/')
-            }, 5000)
-            return
-          }
-
-          console.log('[auth/callback] Session set successfully, user:', data?.user?.email)
+          console.log('[auth/callback] Detected hash token, letting Supabase auto-detect...')
+          
+          // ハッシュトークンの場合、Supabaseが自動的に処理するのでスキップ
+          // localStorageに保存されているはずなので、ホームに戻るだけ
+          console.log('[auth/callback] Hash token detected, redirecting to home...')
           setStatus('ログイン成功！リダイレクト中...')
         } else if (code) {
           setStatus('コードをセッションに交換中...')
