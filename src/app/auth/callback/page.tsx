@@ -40,28 +40,33 @@ export default function AuthCallback() {
 
         if (accessToken) {
           setStatus('トークンからセッションを設定中...')
-          console.log('[auth/callback] Detected hash token, waiting for Supabase to process...')
+          console.log('[auth/callback] Hash token detected, setting session manually...')
           
-          // Supabaseがハッシュからセッションを保存するのを待つ
-          await new Promise(resolve => setTimeout(resolve, 1500))
-          
-          // セッション確認
+          const refreshToken = hashParams.get('refresh_token')
+          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
+
           try {
-            const { data: { session } } = await supabase.auth.getSession()
-            console.log('[auth/callback] Session after wait:', !!session, session?.user?.email)
-            if (session) {
-              console.log('[auth/callback] Session confirmed, redirecting to home...')
-              setStatus('ログイン成功！リダイレクト中...')
-            } else {
-              console.error('[auth/callback] No session found after waiting')
-              setStatus('エラー: セッションが確立できませんでした')
-              setTimeout(() => router.replace('/'), 3000)
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            })
+
+            if (error) {
+              console.error('[auth/callback] setSession error:', error)
+              setStatus(`エラー: ${error.message}`)
+              setTimeout(() => router.replace('/'), 5000)
               return
             }
+
+            console.log('[auth/callback] Session set successfully, user:', data?.user?.email)
+            setStatus('ログイン成功！リダイレクト中...')
+            
+            // Supabaseがセッションを処理する時間を確保
+            await new Promise(resolve => setTimeout(resolve, 1500))
           } catch (e) {
-            console.error('[auth/callback] Session check failed:', e)
-            setStatus('エラー: セッション確認に失敗しました')
-            setTimeout(() => router.replace('/'), 3000)
+            console.error('[auth/callback] setSession exception:', e)
+            setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
+            setTimeout(() => router.replace('/'), 5000)
             return
           }
         } else if (code) {
