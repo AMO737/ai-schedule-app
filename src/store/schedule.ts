@@ -183,14 +183,16 @@ export const useScheduleStore = create<ScheduleState>()(
           return
         }
         
-        console.log("✅ Zustandストアのデータ読み込み完了")
-        console.log("📊 読み込んだデータ:", {
+        if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+          console.log("✅ Zustandストアのデータ読み込み完了")
+          console.log("📊 読み込んだデータ:", {
           fixedEvents: state?.fixedEvents?.length || 0,
           studyBlocks: state?.studyBlocks?.length || 0,
           learningGoal: state?.learningGoal ? 'あり' : 'なし',
           countdownTargets: state?.countdownTargets?.length || 0,
           exceptions: Object.keys(state?.fixedEventExceptions || {}).length
-        })
+          })
+        }
         
         // ハイドレーション完了フラグを設定
         if (state) {
@@ -216,12 +218,16 @@ export const useHydrated = () => {
   
   React.useEffect(() => {
     if (typeof window !== 'undefined' && !hasHydrated) {
-      console.log('🔄 明示的に persist.rehydrate() を呼び出します')
+      if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+        console.log('🔄 明示的に persist.rehydrate() を呼び出します')
+      }
       const rehydrate = async () => {
         try {
           const startTime = Date.now()
           await (useScheduleStore.persist as any).rehydrate()
-          console.log(`✅ persist.rehydrate() 完了 (${Date.now() - startTime}ms)`)
+          if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+            console.log(`✅ persist.rehydrate() 完了 (${Date.now() - startTime}ms)`)
+          }
         } catch (error) {
           console.error('❌ Rehydration error:', error)
           // エラーが起きてもハイドレーション完了とする

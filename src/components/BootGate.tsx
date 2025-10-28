@@ -50,7 +50,7 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
 
             setTimeout(() => {
               clearInterval(checkInterval)
-              console.warn('[boot] Hydration timeout, continuing anyway')
+              if (debug) console.warn('[boot] Hydration timeout, continuing anyway')
               resolve()
             }, 2000)
           })
