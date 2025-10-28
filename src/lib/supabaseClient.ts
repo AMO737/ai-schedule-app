@@ -16,8 +16,8 @@ export function getSupabase() {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      // Supabaseに自動的にURLからセッションを検出させる
-      detectSessionInUrl: true,
+      // コールバックページで手動処理するため無効化
+      detectSessionInUrl: false,
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     },
   })
