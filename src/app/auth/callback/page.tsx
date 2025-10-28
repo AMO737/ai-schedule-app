@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -34,65 +35,38 @@ export default function AuthCallback() {
 
         // URLハッシュからトークンを取得
         if (accessToken) {
-          setStatus('ログイン情報を保存中...')
-          console.log('[auth/callback] Hash token detected')
-          
-          const refreshToken = hashParams.get('refresh_token')
-          const expiresIn = hashParams.get('expires_in')
-          
-          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
-          console.log('[auth/callback] Expires in:', expiresIn)
-
-          // Supabaseのセッションとして保存（正式な方法）
+          setStatus('認証情報を検出しました。処理中...')
+          console.log('[auth/callback] Hash token detected (auto-detect enabled)')
           try {
-            const supabase = (await import('@/lib/supabaseClient')).getSupabase()
-            
-            // セッションデータを構築
-            const sessionData = {
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            }
-
-            console.log('[auth/callback] Calling setSession...')
-            
-            // setSessionを使ってSupabase形式で保存（リトライ付き）
-            let success = false
-            for (let i = 0; i < 3 && !success; i++) {
-              try {
-                const { data, error } = await Promise.race([
-                  supabase.auth.setSession(sessionData),
-                  new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('setSession timeout')), 3000)
-                  )
-                ])
-                
-                if (error) {
-                  console.error(`[auth/callback] setSession error (attempt ${i + 1}):`, error)
-                  if (i === 2) throw error
-                  await new Promise(resolve => setTimeout(resolve, 500))
-                  continue
-                }
-                
-                console.log('[auth/callback] Session set successfully:', data.session?.user?.email)
-                success = true
-              } catch (e) {
-                console.error(`[auth/callback] setSession attempt ${i + 1} failed:`, e)
-                if (i === 2) throw e
-                await new Promise(resolve => setTimeout(resolve, 500))
+            const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+            const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+            if (!url || !anon) throw new Error('ENV_MISSING')
+            // コールバック専用の一時クライアントを生成し、ハッシュからの自動検出を確実に実行
+            const temp = createClient(url, anon, {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+              },
+            })
+            // セッション確立をポーリング
+            const startedAt = Date.now()
+            while (Date.now() - startedAt < 8000) {
+              const { data } = await temp.auth.getSession()
+              if (data.session) {
+                console.log('[auth/callback] Session available, redirecting')
+                window.location.replace('/')
+                return
               }
+              await new Promise(r => setTimeout(r, 300))
             }
-
-            setStatus('ログイン成功！リダイレクト中...')
-            
-            // セッションが反映されるまで少し待つ
-            await new Promise(resolve => setTimeout(resolve, 800))
-            
-            console.log('[auth/callback] Redirecting to home')
+            console.warn('[auth/callback] Session not available within 8s, redirecting anyway')
             window.location.replace('/')
+            return
           } catch (e) {
-            console.error('[auth/callback] Session save error:', e)
-            setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
-            setTimeout(() => router.replace('/'), 5000)
+            console.warn('[auth/callback] Auto-detect handling failed, redirecting', e)
+            window.location.replace('/')
             return
           }
         } else if (code) {
