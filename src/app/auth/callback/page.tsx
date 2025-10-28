@@ -82,10 +82,9 @@ export default function AuthCallback() {
           setStatus('認証中...')
           router.replace(`/?code=${code}`)
         } else {
-          console.warn('[auth/callback] No auth data found, redirecting immediately')
-          setStatus('リダイレクト中...')
-          // 認証データがない場合は即座にホームへ（既にログイン済みの可能性）
-          router.replace('/')
+          console.error('[auth/callback] No auth data found')
+          setStatus('エラー: 認証情報が見つかりません')
+          setTimeout(() => router.replace('/'), 5000)
         }
       } catch (e) {
         console.error('[auth/callback] Exception:', e)
