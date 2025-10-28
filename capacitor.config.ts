@@ -8,12 +8,6 @@ const config: CapacitorConfig = {
   server: {
     url: process.env.CAPACITOR_SERVER_URL || 'https://schedule-app-gold-tau.vercel.app',
     cleartext: false
-  },
-  // ネイティブ機能を使うプラグイン
-  plugins: {
-    App: {
-      enabled: true
-    }
   }
 };
 
