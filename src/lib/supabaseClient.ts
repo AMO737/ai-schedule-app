@@ -31,3 +31,11 @@ export const supabase = new Proxy({} as SupabaseClient, {
     return (instance as any)[prop]
   },
 })
+
+// 後方互換性のため（使用されている場所でimport-time に呼ばれるとthrow するので注意）
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_, prop) {
+    const instance = getSupabase()
+    return (instance as any)[prop]
+  },
+})

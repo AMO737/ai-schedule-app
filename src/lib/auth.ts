@@ -1,4 +1,6 @@
 import { supabase } from './supabase'
+import { Capacitor } from '@capacitor/core'
+import { App } from '@capacitor/app'
 
 export interface AuthUser {
   id: string
@@ -8,11 +10,17 @@ export interface AuthUser {
 
 export class AuthService {
   static async signInWithGoogle() {
-    const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/callback` 
-      : '/auth/callback'
+    // Capacitor（ネイティブアプリ）かブラウザかを判定
+    const isNative = Capacitor.isNativePlatform()
     
-    console.log('[auth] redirectTo:', redirectTo)
+    // リダイレクトURLを設定
+    const redirectTo = isNative
+      ? 'capacitor://localhost/auth/callback' // ネイティブアプリ用のスキーム
+      : typeof window !== 'undefined' 
+        ? `${window.location.origin}/auth/callback` 
+        : '/auth/callback'
+    
+    console.log('[auth] redirectTo:', redirectTo, 'isNative:', isNative)
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
