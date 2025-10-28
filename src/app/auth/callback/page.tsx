@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSupabase } from '@/lib/supabaseClient'
+import { withTimeout } from '@/lib/timeout'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -46,10 +47,14 @@ export default function AuthCallback() {
           console.log('[auth/callback] Has refresh_token:', !!refreshToken)
 
           try {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            })
+            const { data, error } = await withTimeout(
+              supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              }),
+              8000,
+              'setSession'
+            )
 
             if (error) {
               console.error('[auth/callback] setSession error:', error)
