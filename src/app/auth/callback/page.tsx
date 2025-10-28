@@ -27,7 +27,7 @@ export default function AuthCallback() {
 
     const run = async () => {
       try {
-        setStatus('Supabaseクライアントの取得中...')
+        setStatus('認証情報を確認中...')
         console.log('[auth/callback] Getting Supabase client...')
         const supabase = getSupabase()
         console.log('[auth/callback] Got Supabase client')
@@ -39,81 +39,42 @@ export default function AuthCallback() {
           return
         }
 
-        if (accessToken) {
-          setStatus('トークンからセッションを設定中...')
-          console.log('[auth/callback] Hash token detected, setting session manually...')
-          
-          const refreshToken = hashParams.get('refresh_token')
-          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
+        // Supabaseが自動的にURLからセッションを検出して処理する
+        // 少し待ってセッションが確立されるのを待つ
+        console.log('[auth/callback] Waiting for Supabase to process session...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
 
-          try {
-            const { data, error } = await withTimeout(
-              supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken || '',
-              }),
-              8000,
-              'setSession'
-            )
+        // セッションを確認
+        try {
+          const { data: { session }, error } = await withTimeout(
+            supabase.auth.getSession(),
+            5000,
+            'getSession'
+          )
 
-            if (error) {
-              console.error('[auth/callback] setSession error:', error)
-              setStatus(`エラー: ${error.message}`)
-              setTimeout(() => router.replace('/'), 5000)
-              return
-            }
-
-            console.log('[auth/callback] Session set successfully, user:', data?.user?.email)
-            setStatus('ログイン成功！リダイレクト中...')
-            
-            // Supabaseがセッションを処理する時間を確保
-            await new Promise(resolve => setTimeout(resolve, 1500))
-          } catch (e) {
-            console.error('[auth/callback] setSession exception:', e)
-            setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
+          if (error) {
+            console.error('[auth/callback] getSession error:', error)
+            setStatus(`エラー: ${error.message}`)
             setTimeout(() => router.replace('/'), 5000)
             return
           }
-        } else if (code) {
-          setStatus('コードをセッションに交換中...')
-          console.log('[auth/callback] Exchanging code for session...')
 
-          // Exchange PKCE code from query param
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code!)
-
-          if (error) {
-            console.error('[auth/callback] Exchange error:', error)
-            setStatus(`エラー: ${error.message}`)
-            
-            // 5秒後にホームにリダイレクト
-            setTimeout(() => {
-              console.log('[auth/callback] Redirecting to home after error')
-              router.replace('/')
-            }, 5000)
-            return
+          if (session) {
+            console.log('[auth/callback] Session established, user:', session.user?.email)
+            setStatus('ログイン成功！リダイレクト中...')
+          } else {
+            console.warn('[auth/callback] No session found after wait')
+            setStatus('セッションが確立されませんでした。リダイレクト中...')
           }
-
-          console.log('[auth/callback] Session exchange successful, user:', data?.user?.email)
-          setStatus('ログイン成功！リダイレクト中...')
-        } else {
-          console.error('[auth/callback] No code or access_token found')
-          setStatus('エラー: 認証情報が見つかりません')
-          
-          // 5秒後にホームにリダイレクト
-          setTimeout(() => {
-            console.log('[auth/callback] Redirecting to home - no auth data')
-            router.replace('/')
-          }, 5000)
+        } catch (e) {
+          console.error('[auth/callback] getSession exception:', e)
+          setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
+          setTimeout(() => router.replace('/'), 5000)
           return
         }
 
-        // 成功確認後、少し待ってからリダイレクト
-        await new Promise(resolve => setTimeout(resolve, 500))
-        try {
-          const s = await supabase.auth.getSession()
-          console.log('[auth/callback] Session check after set/exchange:', !!s.data.session)
-        } catch {}
-        console.log('[auth/callback] Redirecting to home (success)')
+        // ホームにリダイレクト
+        console.log('[auth/callback] Redirecting to home')
         router.replace('/')
         // Fallback in case router is stuck
         if (typeof window !== 'undefined') {
