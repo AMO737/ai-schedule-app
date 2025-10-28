@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSupabase } from '@/lib/supabaseClient'
-import { withTimeout } from '@/lib/timeout'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -27,11 +25,6 @@ export default function AuthCallback() {
 
     const run = async () => {
       try {
-        setStatus('認証情報を確認中...')
-        console.log('[auth/callback] Getting Supabase client...')
-        const supabase = getSupabase()
-        console.log('[auth/callback] Got Supabase client')
-
         if (errorDescription) {
           console.error('[auth/callback] Provider error:', errorDescription)
           setStatus(`エラー: ${errorDescription}`)
@@ -39,56 +32,64 @@ export default function AuthCallback() {
           return
         }
 
-        // Supabaseが自動的にURLからセッションを検出して処理する
-        // 少し待ってセッションが確立されるのを待つ
-        console.log('[auth/callback] Waiting for Supabase to process session...')
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // URLハッシュからトークンを取得
+        if (accessToken) {
+          setStatus('ログイン情報を保存中...')
+          console.log('[auth/callback] Hash token detected')
+          
+          const refreshToken = hashParams.get('refresh_token')
+          const expiresIn = hashParams.get('expires_in')
+          const tokenType = hashParams.get('token_type')
+          
+          console.log('[auth/callback] Has refresh_token:', !!refreshToken)
+          console.log('[auth/callback] Expires in:', expiresIn)
 
-        // セッションを確認
-        try {
-          const { data: { session }, error } = await withTimeout(
-            supabase.auth.getSession(),
-            5000,
-            'getSession'
-          )
+          // Supabaseのストレージキーに直接保存
+          try {
+            const authData = {
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+              expires_in: expiresIn ? parseInt(expiresIn) : 3600,
+              token_type: tokenType || 'bearer',
+              expires_at: Math.floor(Date.now() / 1000) + (expiresIn ? parseInt(expiresIn) : 3600)
+            }
 
-          if (error) {
-            console.error('[auth/callback] getSession error:', error)
-            setStatus(`エラー: ${error.message}`)
+            // Supabaseが期待する形式でlocalStorageに保存
+            const storageKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`
+            console.log('[auth/callback] Saving to localStorage key:', storageKey)
+            
+            if (typeof window !== 'undefined' && window.localStorage) {
+              window.localStorage.setItem(storageKey, JSON.stringify(authData))
+              console.log('[auth/callback] Token saved to localStorage')
+            }
+
+            setStatus('ログイン成功！リダイレクト中...')
+            
+            // 少し待ってからリダイレクト
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            console.log('[auth/callback] Redirecting to home')
+            window.location.replace('/')
+          } catch (e) {
+            console.error('[auth/callback] Storage error:', e)
+            setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
             setTimeout(() => router.replace('/'), 5000)
             return
           }
-
-          if (session) {
-            console.log('[auth/callback] Session established, user:', session.user?.email)
-            setStatus('ログイン成功！リダイレクト中...')
-          } else {
-            console.warn('[auth/callback] No session found after wait')
-            setStatus('セッションが確立されませんでした。リダイレクト中...')
-          }
-        } catch (e) {
-          console.error('[auth/callback] getSession exception:', e)
-          setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
+        } else if (code) {
+          // PKCEコードフロー（将来の拡張用）
+          console.log('[auth/callback] PKCE code detected, redirecting...')
+          setStatus('認証中...')
+          router.replace(`/?code=${code}`)
+        } else {
+          console.error('[auth/callback] No auth data found')
+          setStatus('エラー: 認証情報が見つかりません')
           setTimeout(() => router.replace('/'), 5000)
-          return
-        }
-
-        // ホームにリダイレクト
-        console.log('[auth/callback] Redirecting to home')
-        router.replace('/')
-        // Fallback in case router is stuck
-        if (typeof window !== 'undefined') {
-          setTimeout(() => { window.location.replace('/') }, 1500)
         }
       } catch (e) {
         console.error('[auth/callback] Exception:', e)
         setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
-        
-        // 5秒後にホームにリダイレクト
-        setTimeout(() => {
-          console.log('[auth/callback] Redirecting to home after exception')
-          router.replace('/')
-        }, 5000)
+        setTimeout(() => router.replace('/'), 5000)
       }
     }
 
