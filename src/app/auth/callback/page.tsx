@@ -39,39 +39,58 @@ export default function AuthCallback() {
           
           const refreshToken = hashParams.get('refresh_token')
           const expiresIn = hashParams.get('expires_in')
-          const tokenType = hashParams.get('token_type')
           
           console.log('[auth/callback] Has refresh_token:', !!refreshToken)
           console.log('[auth/callback] Expires in:', expiresIn)
 
-          // Supabaseのストレージキーに直接保存
+          // Supabaseのセッションとして保存（正式な方法）
           try {
-            const authData = {
+            const supabase = (await import('@/lib/supabaseClient')).getSupabase()
+            
+            // セッションデータを構築
+            const sessionData = {
               access_token: accessToken,
               refresh_token: refreshToken || '',
-              expires_in: expiresIn ? parseInt(expiresIn) : 3600,
-              token_type: tokenType || 'bearer',
-              expires_at: Math.floor(Date.now() / 1000) + (expiresIn ? parseInt(expiresIn) : 3600)
             }
 
-            // Supabaseが期待する形式でlocalStorageに保存
-            const storageKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`
-            console.log('[auth/callback] Saving to localStorage key:', storageKey)
+            console.log('[auth/callback] Calling setSession...')
             
-            if (typeof window !== 'undefined' && window.localStorage) {
-              window.localStorage.setItem(storageKey, JSON.stringify(authData))
-              console.log('[auth/callback] Token saved to localStorage')
+            // setSessionを使ってSupabase形式で保存（リトライ付き）
+            let success = false
+            for (let i = 0; i < 3 && !success; i++) {
+              try {
+                const { data, error } = await Promise.race([
+                  supabase.auth.setSession(sessionData),
+                  new Promise<never>((_, reject) => 
+                    setTimeout(() => reject(new Error('setSession timeout')), 3000)
+                  )
+                ])
+                
+                if (error) {
+                  console.error(`[auth/callback] setSession error (attempt ${i + 1}):`, error)
+                  if (i === 2) throw error
+                  await new Promise(resolve => setTimeout(resolve, 500))
+                  continue
+                }
+                
+                console.log('[auth/callback] Session set successfully:', data.session?.user?.email)
+                success = true
+              } catch (e) {
+                console.error(`[auth/callback] setSession attempt ${i + 1} failed:`, e)
+                if (i === 2) throw e
+                await new Promise(resolve => setTimeout(resolve, 500))
+              }
             }
 
             setStatus('ログイン成功！リダイレクト中...')
             
-            // 少し待ってからリダイレクト
-            await new Promise(resolve => setTimeout(resolve, 500))
+            // セッションが反映されるまで少し待つ
+            await new Promise(resolve => setTimeout(resolve, 800))
             
             console.log('[auth/callback] Redirecting to home')
             window.location.replace('/')
           } catch (e) {
-            console.error('[auth/callback] Storage error:', e)
+            console.error('[auth/callback] Session save error:', e)
             setStatus(`エラー: ${e instanceof Error ? e.message : 'Unknown error'}`)
             setTimeout(() => router.replace('/'), 5000)
             return
