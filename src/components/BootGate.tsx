@@ -24,23 +24,21 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
       try {
         if (debug) console.log('[boot] start', { safe })
 
-        // Storage初期化
-        try {
-          await initStorage()
-          if (debug) console.log('[boot] Storage initialized')
-        } catch (e) {
-          console.warn('[boot] Storage init failed', e)
-        }
+        // Storage初期化とAuth初期化を並列実行（高速化）
+        await Promise.allSettled([
+          initStorage().then(() => {
+            if (debug) console.log('[boot] Storage initialized')
+          }).catch((e) => {
+            console.warn('[boot] Storage init failed', e)
+          }),
+          bootAuth().then(() => {
+            if (debug) console.log('[boot] Auth initialized')
+          }).catch((e) => {
+            console.warn('[boot] Auth init failed', e)
+          })
+        ])
 
-        // Auth初期化
-        try {
-          await bootAuth()
-          if (debug) console.log('[boot] Auth initialized')
-        } catch (e) {
-          console.warn('[boot] Auth init failed', e)
-        }
-
-        // Zustandストアのハイドレーション完了を待つ
+        // Zustandストアのハイドレーション完了を待つ（高速化：チェック間隔50ms）
         if (!hasHydrated) {
           const hydratePromise = new Promise<void>(resolve => {
             const checkInterval = setInterval(() => {
@@ -48,13 +46,13 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
                 clearInterval(checkInterval)
                 resolve()
               }
-            }, 100)
+            }, 50)
 
             setTimeout(() => {
               clearInterval(checkInterval)
               console.warn('[boot] Hydration timeout, continuing anyway')
               resolve()
-            }, 3000)
+            }, 2000)
           })
 
           await hydratePromise
@@ -73,13 +71,13 @@ export default function BootGate({ children }: { children: React.ReactNode }) {
 
     init()
 
-    // 5秒タイムアウト
+    // 3秒タイムアウト（高速化）
     const t = setTimeout(() => {
       if (!ready) {
         setWarn('読み込みが長いです。?safe=1 を試すか、?reset=1 でリセットしてください。')
         setReady(true)
       }
-    }, 5000)
+    }, 3000)
 
     return () => {
       stale = true

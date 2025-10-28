@@ -6,14 +6,14 @@ export async function initStorage() {
     const { idbStorage } = await import('@/lib/idbStorage')
     const testKey = '__init_test__'
     
-    // 読み書きテスト（タイムアウト付き）
+    // 読み書きテスト（タイムアウト1秒に短縮）
     await withTimeout(
       Promise.all([
         idbStorage.setItem(testKey, 'test'),
         idbStorage.getItem(testKey),
         idbStorage.removeItem(testKey),
       ]),
-      3000,
+      1000,
       'initStorage'
     )
     

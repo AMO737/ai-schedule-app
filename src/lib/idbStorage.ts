@@ -5,12 +5,12 @@ import { withTimeout } from './timeout'
 // IndexedDBストレージの初期化（タイムアウト付き）
 async function ensureStorage() {
   try {
-    // 3秒でタイムアウト
+    // 1秒でタイムアウト（高速化）
     await withTimeout(
       new Promise<void>((resolve) => {
         get('__test__').then(() => resolve()).catch(() => resolve())
       }),
-      3000,
+      1000,
       'idb-keyval'
     )
     return true
