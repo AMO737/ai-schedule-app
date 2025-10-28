@@ -240,9 +240,3 @@ export const useHydrated = () => {
   
   return hasHydrated
 }
-
-    }
-  }, [hasHydrated])
-  
-  return hasHydrated
-}

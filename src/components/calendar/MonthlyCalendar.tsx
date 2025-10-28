@@ -164,23 +164,19 @@ export function MonthlyCalendar({ userId, fixedEvents, studyBlocks, onDateClick,
                 {date.getDate()}
               </div>
               
-              {/* 固定予定の表示 */}
+              {/* 固定予定の表示（全件表示・セル内スクロール） */}
               {fixedEventsForDate.length > 0 && (
-                <div className="space-y-1">
-                  {fixedEventsForDate.slice(0, 2).map((event, idx) => (
+                <div className="space-y-1 max-h-16 overflow-y-auto pr-1">
+                  {fixedEventsForDate.map((event, idx) => (
                     <div
                       key={idx}
-                      className="text-xs px-1 py-0.5 rounded truncate text-white font-medium"
+                      className="text-xs px-1 py-0.5 rounded text-white font-medium whitespace-nowrap overflow-hidden text-ellipsis"
                       style={{ backgroundColor: event.color }}
+                      title={`${event.title} ${event.start_time}-${event.end_time}`}
                     >
                       {event.title}
                     </div>
                   ))}
-                  {fixedEventsForDate.length > 2 && (
-                    <div className="text-xs text-gray-700">
-                      +{fixedEventsForDate.length - 2}件
-                    </div>
-                  )}
                 </div>
               )}
 

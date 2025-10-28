@@ -356,4 +356,3 @@ export class ScheduleAlgorithm {
     return time1Start < time2End && time2Start < time1End
   }
 }
-

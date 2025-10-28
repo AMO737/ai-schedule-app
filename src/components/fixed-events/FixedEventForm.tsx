@@ -314,4 +314,3 @@ export function FixedEventForm({ onSubmit, onCancel, initialData }: FixedEventFo
     </form>
   )
 }
-

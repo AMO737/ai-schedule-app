@@ -184,4 +184,3 @@ export interface NotificationSettings {
   enable_push_notifications: boolean
   enable_email_notifications: boolean
 }
-

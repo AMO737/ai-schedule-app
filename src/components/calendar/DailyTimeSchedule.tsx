@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FixedEvent, StudyBlock } from '@/types'
+import { FixedEvent, StudyBlock, LearningGoal } from '@/types'
 import { Button } from '@/components/ui/button'
 import { QuickEventAddModal } from './QuickEventAddModal'
 
@@ -9,6 +9,7 @@ interface DailyTimeScheduleProps {
   selectedDate: Date
   fixedEvents: FixedEvent[]
   studyBlocks: StudyBlock[]
+  learningGoal?: LearningGoal | null
   onAddEvent: (date: Date) => void
   onAddStudyBlock: (date: Date) => void
   onEditStudyBlock?: (block: StudyBlock) => void
@@ -35,6 +36,7 @@ export function DailyTimeSchedule({
   selectedDate,
   fixedEvents,
   studyBlocks,
+  learningGoal,
   onAddEvent,
   onAddStudyBlock,
   onEditStudyBlock,
@@ -80,6 +82,30 @@ export function DailyTimeSchedule({
     const dateStr = selectedDate.toISOString().split('T')[0]
     const dayOfWeek = selectedDate.getDay()
     
+    // 就寝時間を休止枠として反映
+    if (learningGoal && learningGoal.sleep_time && learningGoal.wake_up_time) {
+      const sleep = learningGoal.sleep_time
+      const wake = learningGoal.wake_up_time
+      const startSleepIdx = findTimeSlot(slots, sleep)
+      const wakeIdx = findTimeSlot(slots, wake)
+      if (startSleepIdx !== -1 && wakeIdx !== -1) {
+        if (sleep > wake) {
+          // 例: 23:00-07:00（跨ぎ）→ [23:00-24:00) と [00:00-07:00)
+          for (let i = startSleepIdx; i < slots.length; i++) {
+            slots[i] = { ...slots[i], type: slots[i].type === 'fixed-event' ? 'fixed-event' : 'rest' }
+          }
+          for (let i = 0; i < wakeIdx; i++) {
+            slots[i] = { ...slots[i], type: slots[i].type === 'fixed-event' ? 'fixed-event' : 'rest' }
+          }
+        } else if (sleep < wake) {
+          // 同日内の休止（昼寝等）
+          for (let i = startSleepIdx; i < wakeIdx; i++) {
+            slots[i] = { ...slots[i], type: slots[i].type === 'fixed-event' ? 'fixed-event' : 'rest' }
+          }
+        }
+      }
+    }
+
     // 固定予定を配置
     const dayFixedEvents = fixedEvents.filter(event => 
       event.is_active && event.day_of_week === dayOfWeek

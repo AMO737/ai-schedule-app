@@ -310,4 +310,3 @@ export function LearningGoalDisplay({ userId, learningGoal, onEdit }: LearningGo
     </div>
   )
 }
-

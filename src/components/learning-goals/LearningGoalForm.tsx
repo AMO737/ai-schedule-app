@@ -572,4 +572,3 @@ export function LearningGoalForm({ onSubmit, onCancel, initialData }: LearningGo
     </form>
   )
 }
-
