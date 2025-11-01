@@ -29,39 +29,15 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
     const dd = String(now.getDate()).padStart(2, '0')
     const today = `${yyyy}-${mm}-${dd}` // ← JSTベースの今日
     
-    console.log('[TodaySchedule] today(local)=', today)
-    console.log('[TodaySchedule] incoming blocks=', externalStudyBlocks)
-    console.log('[TodaySchedule] Filtering blocks, total:', externalStudyBlocks.length)
-    console.log('[TodaySchedule] All block dates:', externalStudyBlocks.map(b => ({ id: b.id, date: b.date, subject: b.subject })))
-    const filtered = externalStudyBlocks.filter(block => {
-      // dateフィールドを確認
-      if (!block?.date) {
-        console.log('[TodaySchedule] Block has no date:', block.id)
-        return false
-      }
-      
-      // "YYYY-MM-DD" だけを見る（ISO文字列の場合も対応）
-      const raw = block.date
-      const d = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10)
-      
-      // 明日以降は絶対に表示しない
-      if (d > today) {
-        console.log('[TodaySchedule] Future date excluded:', d, '>', today)
-        return false
-      }
-      
-      // 過去は表示しない（今日は表示）
-      if (d < today) {
-        console.log('[TodaySchedule] Past date excluded:', d, '<', today)
-        return false
-      }
-      
-      // ここまで来たら今日
-      console.log('[TodaySchedule] Today\'s block:', d, '==', today)
-      return true
-    }).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
-    console.log('[TodaySchedule] Filtered blocks:', filtered)
-    return filtered
+    const todayBlocks = externalStudyBlocks
+      .filter((b) => {
+        if (!b.date) return false
+        const d = b.date.slice(0, 10)
+        return d === today
+      })
+      .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""))
+    
+    return todayBlocks
   }, [externalStudyBlocks])
 
   useEffect(() => {
