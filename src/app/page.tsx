@@ -725,6 +725,7 @@ export default function HomePage() {
                           ))
                         } else {
                           console.log('新規作成モード: ブロックを追加します')
+                          console.log('blockData:', blockData)
                           // 新規作成の場合は追加処理
                           const newBlock = {
                             ...blockData,
@@ -733,7 +734,12 @@ export default function HomePage() {
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString()
                           }
-                          setStudyBlocks(prev => [...prev, newBlock])
+                          console.log('newBlock:', newBlock)
+                          setStudyBlocks(prev => {
+                            const updated = [...prev, newBlock]
+                            console.log('studyBlocks after update:', updated)
+                            return updated
+                          })
                         }
                         
                         setEditingStudyBlock(null)

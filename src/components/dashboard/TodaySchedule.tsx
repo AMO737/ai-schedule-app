@@ -17,13 +17,19 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
 
   // 今日のブロックを計算
   const todayBlocks = useMemo(() => {
+    console.log('[TodaySchedule] useMemo called, externalStudyBlocks:', externalStudyBlocks)
     if (!externalStudyBlocks || externalStudyBlocks.length === 0) {
+      console.log('[TodaySchedule] No external study blocks')
       return []
     }
     const today = new Date().toISOString().split('T')[0]
-    return externalStudyBlocks.filter(block => 
+    console.log('[TodaySchedule] Today:', today)
+    console.log('[TodaySchedule] Filtering blocks, total:', externalStudyBlocks.length)
+    const filtered = externalStudyBlocks.filter(block => 
       block.date && block.date.startsWith(today)
     ).sort((a, b) => a.start_time.localeCompare(b.start_time))
+    console.log('[TodaySchedule] Filtered blocks:', filtered)
+    return filtered
   }, [externalStudyBlocks])
 
   useEffect(() => {
