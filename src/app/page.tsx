@@ -396,7 +396,8 @@ export default function HomePage() {
                 />
                 <TodaySchedule 
                   userId={currentUser.id} 
-                  studyBlocks={studyBlocks} 
+                  studyBlocks={studyBlocks}
+                  key={`today-${studyBlocks.length}`} 
                   onUpdateBlock={(blockId, updates) => {
                     setStudyBlocks(prev => prev.map(block => 
                       block.id === blockId 
