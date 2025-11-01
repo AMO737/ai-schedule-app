@@ -34,11 +34,30 @@ export function NotificationSystem({
     email: '' 
   })
 
+  // EmailNotificationSettingsから設定を読み込む
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('email_notification_settings')
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings)
+        setEmailSettings({
+          enabled: settings.enabled || false,
+          email: settings.email || ''
+        })
+      } catch (error) {
+        console.error('Failed to parse email notification settings:', error)
+      }
+    }
+  }, [])
+
   // 通知を生成する関数
   const generateNotifications = () => {
     const newNotifications: NotificationItem[] = []
     const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
+    const yyyy = today.getFullYear()
+    const mm = String(today.getMonth() + 1).padStart(2, '0')
+    const dd = String(today.getDate()).padStart(2, '0')
+    const todayStr = `${yyyy}-${mm}-${dd}`
     
     console.log('Generating notifications for date:', todayStr)
     console.log('Fixed events:', fixedEvents.length)
@@ -68,23 +87,26 @@ export function NotificationSystem({
 
     // 2. アラーム機能付き学習ブロックの通知
     studyBlocks.forEach(block => {
-      if (block.hasAlarm && block.date === todayStr) {
-        const startTime = new Date(`${block.date}T${block.start_time}:00`)
-        const now = new Date()
-        const timeDiff = startTime.getTime() - now.getTime()
-        
-        // 開始時間の30分前に通知
-        if (timeDiff > 0 && timeDiff <= 30 * 60 * 1000) {
-          newNotifications.push({
-            id: `study-alarm-${block.id}`,
-            type: 'study-block-alarm',
-            title: '学習時間のお知らせ',
-            message: `${block.subject} の学習時間が30分後に開始されます`,
-            time: block.start_time,
-            date: block.date,
-            isRead: false,
-            createdAt: new Date()
-          })
+      if (block.hasAlarm && block.date) {
+        const blockDateStr = block.date.slice(0, 10)
+        if (blockDateStr === todayStr) {
+          const startTime = new Date(`${block.date}T${block.start_time}:00`)
+          const now = new Date()
+          const timeDiff = startTime.getTime() - now.getTime()
+          
+          // 開始時間の30分前に通知
+          if (timeDiff > 0 && timeDiff <= 30 * 60 * 1000) {
+            newNotifications.push({
+              id: `study-alarm-${block.id}`,
+              type: 'study-block-alarm',
+              title: '学習時間のお知らせ',
+              message: `${block.subject} の学習時間が30分後に開始されます`,
+              time: block.start_time,
+              date: block.date,
+              isRead: false,
+              createdAt: new Date()
+            })
+          }
         }
       }
     })
