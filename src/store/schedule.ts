@@ -28,32 +28,35 @@ function fixUTCShift(blocks: StudyBlock[]): StudyBlock[] {
   return (blocks || []).map((b) => {
     if (!b.date) return b
     
-    // "YYYY-MM-DD" 前提でパース
+    // "YYYY-MM-DD" 形式の日付のみ対象
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date)) return b
+    
+    // 元の日付をローカルとしてパース
     const [y, m, d] = b.date.split("-").map(Number)
+    const local = new Date(y, (m || 1) - 1, d || 1)
     
-    // 対象日だけに限定（2025-10-31以前のデータのみ補正）
-    // これは一時的な修正なので、2025-11-01以降のデータには適用しない
-    const targetDate = "2025-10-31"
-    if (b.date !== targetDate) {
-      // 補正不要な場合はそのまま返す
-      return b
+    // UTCで文字列にすると1日前扱いになるかチェック
+    const utcStr = local.toISOString().split("T")[0]
+    
+    // もし utcStr が元の b.date より「1日だけ前」なら +1 して補正
+    if (utcStr < b.date) {
+      const fixed = new Date(local.getTime())
+      fixed.setDate(fixed.getDate() + 1)
+      
+      const yyyy = fixed.getFullYear()
+      const mm = String(fixed.getMonth() + 1).padStart(2, "0")
+      const dd = String(fixed.getDate()).padStart(2, "0")
+      
+      const fixedDate = `${yyyy}-${mm}-${dd}`
+      
+      if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+        console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
+      }
+      
+      return { ...b, date: fixedDate }
     }
     
-    const dt = new Date(y, (m || 1) - 1, d || 1)
-    // UTCで前日になってるので +1日する
-    dt.setDate(dt.getDate() + 1)
-    
-    const yyyy = dt.getFullYear()
-    const mm = String(dt.getMonth() + 1).padStart(2, "0")
-    const dd = String(dt.getDate()).padStart(2, "0")
-    
-    const fixedDate = `${yyyy}-${mm}-${dd}`
-    
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
-      console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
-    }
-    
-    return { ...b, date: fixedDate }
+    return b
   })
 }
 
