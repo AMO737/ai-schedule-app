@@ -87,6 +87,7 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
       return
     }
 
+    console.log('[StudyBlockForm] Submitting with formData:', formData)
     setIsSubmitting(true)
 
     try {
@@ -102,6 +103,7 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
         hasAlarm: false,
         completed_at: formData.is_completed ? new Date().toISOString() : undefined,
       }
+      console.log('[StudyBlockForm] Submit data:', submitData)
       
       await onSubmit(submitData)
     } catch (error) {
