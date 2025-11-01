@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { StudyBlock } from '@/types'
 import { Button } from '@/components/ui/button'
 import { StudyBlockService } from '@/lib/study-blocks'
@@ -15,16 +15,20 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
   const [blocks, setBlocks] = useState<StudyBlock[]>([])
   const [loading, setLoading] = useState(true)
 
+  // 今日のブロックを計算
+  const todayBlocks = useMemo(() => {
+    if (!externalStudyBlocks || externalStudyBlocks.length === 0) {
+      return []
+    }
+    const today = new Date().toISOString().split('T')[0]
+    return externalStudyBlocks.filter(block => 
+      block.date && block.date.startsWith(today)
+    ).sort((a, b) => a.start_time.localeCompare(b.start_time))
+  }, [externalStudyBlocks])
+
   useEffect(() => {
     if (externalStudyBlocks) {
       // 外部から渡されたstudyBlocksを使用
-      const today = new Date().toISOString().split('T')[0]
-      console.log('[TodaySchedule] Today:', today)
-      console.log('[TodaySchedule] All blocks:', externalStudyBlocks)
-      const todayBlocks = externalStudyBlocks.filter(block => 
-        block.date && block.date.startsWith(today)
-      ).sort((a, b) => a.start_time.localeCompare(b.start_time))
-      console.log('[TodaySchedule] Filtered today blocks:', todayBlocks)
       setBlocks(todayBlocks)
       setLoading(false)
     } else {
@@ -45,7 +49,7 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
         fetchTodayBlocks()
       }
     }
-  }, [userId, externalStudyBlocks])
+  }, [userId, externalStudyBlocks, todayBlocks])
 
   const handleComplete = async (blockId: string) => {
     if (onUpdateBlock) {
