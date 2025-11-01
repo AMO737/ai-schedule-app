@@ -186,13 +186,14 @@ describe('NotificationSystem', () => {
 1. **Resend API キーの設定**
    ```bash
    # Vercel 環境変数に追加
-   RESEND_API_KEY=your_resend_api_key_here
+   RESEND_API_KEY=xxxxxxxxxxxxxxxx
+   EMAIL_FROM=Study App <noreply@yourdomain.com>
    ```
 
 2. **Resend ドメイン設定**
    - Resend ダッシュボードでドメインを追加
    - DNS レコードを設定
-   - 送信元メールアドレスを変更（現在は `noreply@yourapp.com`）
+   - `EMAIL_FROM` 環境変数で送信元メールアドレスを設定
 
 ### テスト方法
 

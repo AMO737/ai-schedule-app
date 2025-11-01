@@ -13,6 +13,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "no api key" }, { status: 500 });
   }
 
+  const emailFrom = process.env.EMAIL_FROM || "Study App <noreply@yourapp.com>";
+
   // Resendに送る
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Study App <noreply@yourapp.com>",
+      from: emailFrom,
       to,
       subject: subject ?? "学習リマインド",
       text: text ?? "学習の時間です。",
