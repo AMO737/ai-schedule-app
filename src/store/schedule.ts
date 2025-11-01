@@ -23,86 +23,21 @@ export type FixedEventExceptions = { [key: string]: string[] | undefined }
 /**
  * UTC日付ズレを補正する関数
  * 既に保存されているUTC日付をローカル日付に変換する
+ * 注意: 現在は補正が完了しているため、実質無効化されている
  */
 function fixUTCShift(blocks: StudyBlock[]): StudyBlock[] {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  
-  return (blocks || []).map((b) => {
-    if (!b.date) return b
-    
-    // "YYYY-MM-DD" 形式の日付のみ対象
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date)) return b
-    
-    const [y, m, d] = b.date.split("-").map(Number)
-    const local = new Date(y, (m || 1) - 1, d || 1)
-    local.setHours(0, 0, 0, 0)
-    
-    // UTCで文字列にすると1日前扱いになるかチェック
-    const utcStr = local.toISOString().split("T")[0]
-    
-    // 差を計算（ミリ秒→日）
-    const utcDate = new Date(utcStr + "T00:00:00")
-    const diffMs = local.getTime() - utcDate.getTime()
-    const diffDays = diffMs / (1000 * 60 * 60 * 24)
-    
-    // 1日より大きくズレていたら触らない（無限進むのを防ぐ）
-    if (diffDays < 1 || diffDays > 1) {
-      return b
-    }
-    
-    // ここまで来たら「UTCにすると1日前になる」パターンなので +1日する
-    const fixed = new Date(local.getTime())
-    fixed.setDate(fixed.getDate() + 1)
-    
-    const yyyy = fixed.getFullYear()
-    const mm = String(fixed.getMonth() + 1).padStart(2, "0")
-    const dd = String(fixed.getDate()).padStart(2, "0")
-    
-    const fixedDate = `${yyyy}-${mm}-${dd}`
-    
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
-      console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
-    }
-    
-    return { ...b, date: fixedDate }
-  })
+  // 補正済みデータはそのまま返す
+  return blocks
 }
 
 /**
  * 未来に飛びすぎた日付を修正する関数
  * 3日以上未来のデータを今日に戻す（一時的）
+ * 注意: 現在は補正が完了しているため、実質無効化されている
  */
 function clampFuture(blocks: StudyBlock[]): StudyBlock[] {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  
-  return (blocks || []).map((b) => {
-    if (!b.date) return b
-    
-    const [y, m, d] = b.date.split("-").map(Number)
-    const dt = new Date(y, (m || 1) - 1, d || 1)
-    dt.setHours(0, 0, 0, 0)
-    
-    const diffDays = (dt.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    
-    // 3日以上未来なら今日に戻す（暫定）
-    if (diffDays >= 3) {
-      const yyyy = today.getFullYear()
-      const mm = String(today.getMonth() + 1).padStart(2, "0")
-      const dd = String(today.getDate()).padStart(2, "0")
-      
-      const clampedDate = `${yyyy}-${mm}-${dd}`
-      
-      if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
-        console.log(`[clampFuture] Clamped date from ${b.date} to ${clampedDate}`)
-      }
-      
-      return { ...b, date: clampedDate }
-    }
-    
-    return b
-  })
+  // 補正済みデータはそのまま返す
+  return blocks
 }
 
 type ScheduleState = {
