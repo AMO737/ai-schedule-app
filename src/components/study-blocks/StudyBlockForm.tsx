@@ -32,20 +32,48 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
   
   // 初期データが変更されたときにフォームデータを更新
   useEffect(() => {
+    // Date型から YYYY-MM-DD 形式に変換する関数
+    const formatDateToLocal = (date: Date | string): string => {
+      let d: Date
+      if (typeof date === 'string') {
+        // すでに YYYY-MM-DD 形式の場合はそのまま返す
+        if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return date
+        }
+        d = new Date(date)
+      } else {
+        d = date
+      }
+      const yyyy = d.getFullYear()
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      return `${yyyy}-${mm}-${dd}`
+    }
+    
     if (initialData) {
+      let dateStr = ''
+      if ((initialData as any).scheduled_date) {
+        dateStr = formatDateToLocal((initialData as any).scheduled_date)
+      } else if (initialData.date) {
+        dateStr = formatDateToLocal(initialData.date)
+      } else if (selectedDate) {
+        dateStr = formatDateToLocal(selectedDate)
+      }
+      
       setFormData({
         subject: initialData.subject || '',
-        scheduled_date: (initialData as any).scheduled_date || initialData.date || (selectedDate ? selectedDate.toISOString().split('T')[0] : ''),
+        scheduled_date: dateStr,
         start_time: initialData.start_time || '07:00',
         end_time: initialData.end_time || '07:30',
         color: initialData.color || '#10B981',
         is_completed: initialData.is_completed || false,
       })
     } else if (selectedDate) {
-      // 新規作成時は選択された日付を使用
+      // 新規作成時は選択された日付を使用（ローカル日付として扱う）
+      const dateStr = formatDateToLocal(selectedDate)
       setFormData({
         subject: subjectOptions.length > 0 ? subjectOptions[0] : '',
-        scheduled_date: selectedDate.toISOString().split('T')[0],
+        scheduled_date: dateStr,
         start_time: '07:00',
         end_time: '07:30',
         color: '#10B981',
@@ -92,9 +120,12 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
     setIsSubmitting(true)
 
     try {
+      // YYYY-MM-DD 形式を保証
+      const dateStr = formData.scheduled_date // すでに YYYY-MM-DD 形式のはず
+      
       const submitData = {
         subject: formData.subject.trim(),
-        date: formData.scheduled_date,
+        date: dateStr,
         start_time: formData.start_time,
         end_time: formData.end_time,
         duration: calculateDuration(),
@@ -105,6 +136,7 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
         completed_at: formData.is_completed ? new Date().toISOString() : undefined,
       }
       console.log('[StudyBlockForm] Submit data:', submitData)
+      console.log('[StudyBlockForm] date field (YYYY-MM-DD):', dateStr)
       
       await onSubmit(submitData)
     } catch (error) {

@@ -22,8 +22,15 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
       console.log('[TodaySchedule] No external study blocks')
       return []
     }
-    const today = new Date().toISOString().split('T')[0]
-    console.log('[TodaySchedule] Today:', today)
+    // JSTベースの今日を計算
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const today = `${yyyy}-${mm}-${dd}` // ← JSTベースの今日
+    
+    console.log('[TodaySchedule] today(local)=', today)
+    console.log('[TodaySchedule] incoming blocks=', externalStudyBlocks)
     console.log('[TodaySchedule] Filtering blocks, total:', externalStudyBlocks.length)
     console.log('[TodaySchedule] All block dates:', externalStudyBlocks.map(b => ({ id: b.id, date: b.date, subject: b.subject })))
     const filtered = externalStudyBlocks.filter(block => {
@@ -116,7 +123,15 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
           <p className="text-gray-700">今日の学習ブロックがありません。</p>
           <p className="text-xs text-gray-500 mt-2">
             Debug: Total blocks: {externalStudyBlocks?.length || 0}, Today blocks: {todayBlocks.length}
-            <span className="block mt-1">Today's date: {new Date().toISOString().split('T')[0]}</span>
+            <span className="block mt-1">
+              Today's date (local): {(() => {
+                const now = new Date()
+                const yyyy = now.getFullYear()
+                const mm = String(now.getMonth() + 1).padStart(2, '0')
+                const dd = String(now.getDate()).padStart(2, '0')
+                return `${yyyy}-${mm}-${dd}`
+              })()}
+            </span>
             {externalStudyBlocks && externalStudyBlocks.length > 0 && (
               <span className="block mt-1">Block dates: {externalStudyBlocks.slice(0, 3).map(b => b.date).join(', ')}</span>
             )}
