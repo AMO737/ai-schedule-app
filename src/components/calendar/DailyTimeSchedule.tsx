@@ -55,10 +55,17 @@ export function DailyTimeSchedule({
     return `study-block-${Date.now()}-${idCounter}`
   }
   
+  // Dateをローカル日付文字列(YYYY-MM-DD)に変換する関数
+  const dateToLocalString = (date: Date): string => {
+    const yyyy = date.getFullYear()
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    const dd = String(date.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
   // 30分おきのタイムスロットを生成
   const generateTimeSlots = (): TimeSlot[] => {
     const slots: TimeSlot[] = []
-    const dateStr = selectedDate.toISOString().split('T')[0]
     const dayOfWeek = selectedDate.getDay()
     
     // 00:00から23:30まで30分おきに生成
@@ -79,7 +86,7 @@ export function DailyTimeSchedule({
 
   // 各タイムスロットに予定や学習ブロックを配置
   const populateTimeSlots = (slots: TimeSlot[]): TimeSlot[] => {
-    const dateStr = selectedDate.toISOString().split('T')[0]
+    const dateStr = dateToLocalString(selectedDate)
     const dayOfWeek = selectedDate.getDay()
     
     // 就寝時間を休止枠として反映
@@ -137,9 +144,11 @@ export function DailyTimeSchedule({
     })
     
     // 学習ブロックを配置
-    const dayStudyBlocks = studyBlocks.filter(block => 
-      block.date.startsWith(dateStr)
-    )
+    const dayStudyBlocks = studyBlocks.filter(block => {
+      if (!block.date) return false
+      const blockDateStr = block.date.slice(0, 10)
+      return blockDateStr === dateStr
+    })
     
     dayStudyBlocks.forEach(block => {
       const startTime = block.start_time
@@ -237,7 +246,7 @@ export function DailyTimeSchedule({
         id: generateId(),
         user_id: 'demo-user',
         subject: eventData.subject || '',
-        date: selectedDate.toISOString().split('T')[0],
+        date: dateToLocalString(selectedDate),
         start_time: eventData.startTime,
         end_time: eventData.endTime,
         duration: calculateDuration(eventData.startTime, eventData.endTime),

@@ -46,10 +46,15 @@ export function DateDetail({
   )
 
   // 選択日の学習ブロックを取得
-  const dateStr = selectedDate.toISOString().split('T')[0]
-  const studyBlocksForDate = studyBlocks.filter(block => 
-    block.date && block.date.startsWith(dateStr)
-  )
+  const yyyy = selectedDate.getFullYear()
+  const mm = String(selectedDate.getMonth() + 1).padStart(2, '0')
+  const dd = String(selectedDate.getDate()).padStart(2, '0')
+  const dateStr = `${yyyy}-${mm}-${dd}`
+  const studyBlocksForDate = studyBlocks.filter(block => {
+    if (!block.date) return false
+    const blockDateStr = block.date.slice(0, 10)
+    return blockDateStr === dateStr
+  })
 
   const completedBlocks = studyBlocksForDate.filter(block => block.is_completed).length
   const totalBlocks = studyBlocksForDate.length
@@ -86,7 +91,7 @@ export function DateDetail({
         {fixedEventsForDate.length > 0 ? (
           <div className="space-y-2">
             {fixedEventsForDate.map((event, index) => {
-              const dateStr = selectedDate.toISOString().split('T')[0]
+              const dateStr = `${yyyy}-${mm}-${dd}`
               const isException = fixedEventExceptions[dateStr]?.includes(event.id) || false
               
               return (

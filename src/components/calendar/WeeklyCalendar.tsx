@@ -38,10 +38,18 @@ export function WeeklyCalendar({ userId, fixedEvents, studyBlocks, onDateClick, 
 
   const weekDays = getWeekDays(getWeekStart(new Date(currentWeek)))
 
+  // Dateをローカル日付文字列(YYYY-MM-DD)に変換する関数
+  const dateToLocalString = (date: Date): string => {
+    const yyyy = date.getFullYear()
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    const dd = String(date.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
   // 指定日の固定予定を取得
   const getFixedEventsForDate = (date: Date) => {
     const dayOfWeek = date.getDay()
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = dateToLocalString(date)
     const exceptionsForDate = fixedEventExceptions[dateStr] || []
     
     return fixedEvents.filter(event => 
@@ -53,10 +61,12 @@ export function WeeklyCalendar({ userId, fixedEvents, studyBlocks, onDateClick, 
 
   // 指定日の学習ブロックを取得
   const getStudyBlocksForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
-    return studyBlocks.filter(block => 
-      block.date && block.date.startsWith(dateStr)
-    )
+    const dateStr = dateToLocalString(date)
+    return studyBlocks.filter(block => {
+      if (!block.date) return false
+      const blockDateStr = block.date.slice(0, 10)
+      return blockDateStr === dateStr
+    })
   }
 
   // 日付が今日かどうか
