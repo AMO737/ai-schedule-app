@@ -394,7 +394,17 @@ export default function HomePage() {
                     // 即座にストレージに保存
                   }}
                 />
-                <TodaySchedule userId={currentUser.id} />
+                <TodaySchedule 
+                  userId={currentUser.id} 
+                  studyBlocks={studyBlocks} 
+                  onUpdateBlock={(blockId, updates) => {
+                    setStudyBlocks(prev => prev.map(block => 
+                      block.id === blockId 
+                        ? { ...block, ...updates, updated_at: new Date().toISOString() }
+                        : block
+                    ))
+                  }}
+                />
                 <WeeklyProgress userId={currentUser.id} />
               </div>
 

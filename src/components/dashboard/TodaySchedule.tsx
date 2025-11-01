@@ -7,53 +7,64 @@ import { StudyBlockService } from '@/lib/study-blocks'
 
 interface TodayScheduleProps {
   userId: string
+  studyBlocks?: StudyBlock[]
+  onUpdateBlock?: (blockId: string, updates: Partial<StudyBlock>) => void
 }
 
-export function TodaySchedule({ userId }: TodayScheduleProps) {
+export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpdateBlock }: TodayScheduleProps) {
   const [blocks, setBlocks] = useState<StudyBlock[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchTodayBlocks = async () => {
-      try {
-        const today = new Date()
-        const data = await StudyBlockService.getStudyBlocks(userId, today)
-        setBlocks(data)
-      } catch (error) {
-        console.error('Failed to fetch today blocks:', error)
-      } finally {
-        setLoading(false)
+    if (externalStudyBlocks) {
+      // 外部から渡されたstudyBlocksを使用
+      const today = new Date().toISOString().split('T')[0]
+      const todayBlocks = externalStudyBlocks.filter(block => 
+        block.date && block.date.startsWith(today)
+      ).sort((a, b) => a.start_time.localeCompare(b.start_time))
+      setBlocks(todayBlocks)
+      setLoading(false)
+    } else {
+      // 旧実装：サービスから取得（デモデータなし）
+      const fetchTodayBlocks = async () => {
+        try {
+          const today = new Date()
+          const data = await StudyBlockService.getStudyBlocks(userId, today)
+          setBlocks(data)
+        } catch (error) {
+          console.error('Failed to fetch today blocks:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      if (userId) {
+        fetchTodayBlocks()
       }
     }
-
-    if (userId) {
-      fetchTodayBlocks()
-    }
-  }, [userId])
+  }, [userId, externalStudyBlocks])
 
   const handleComplete = async (blockId: string) => {
-    try {
-      await StudyBlockService.markStudyBlockCompleted(blockId)
+    if (onUpdateBlock) {
+      onUpdateBlock(blockId, { is_completed: true, completed_at: new Date().toISOString() })
+    } else {
       setBlocks(prev => prev.map(block => 
         block.id === blockId 
           ? { ...block, is_completed: true, completed_at: new Date().toISOString() }
           : block
       ))
-    } catch (error) {
-      console.error('Failed to mark block as completed:', error)
     }
   }
 
   const handleSkip = async (blockId: string) => {
-    try {
-      await StudyBlockService.markStudyBlockSkipped(blockId)
+    if (onUpdateBlock) {
+      onUpdateBlock(blockId, { is_skipped: true })
+    } else {
       setBlocks(prev => prev.map(block => 
         block.id === blockId 
           ? { ...block, is_skipped: true }
           : block
       ))
-    } catch (error) {
-      console.error('Failed to mark block as skipped:', error)
     }
   }
 
