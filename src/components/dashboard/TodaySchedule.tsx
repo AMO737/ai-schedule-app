@@ -25,7 +25,7 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
     const today = new Date().toISOString().split('T')[0]
     console.log('[TodaySchedule] Today:', today)
     console.log('[TodaySchedule] Filtering blocks, total:', externalStudyBlocks.length)
-    console.log('[TodaySchedule] Sample block dates:', externalStudyBlocks.slice(0, 3).map(b => ({ id: b.id, date: b.date })))
+    console.log('[TodaySchedule] All block dates:', externalStudyBlocks.map(b => ({ id: b.id, date: b.date, subject: b.subject })))
     const filtered = externalStudyBlocks.filter(block => {
       // dateフィールドを確認
       const blockDateStr = block.date
