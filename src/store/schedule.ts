@@ -135,11 +135,7 @@ export const useScheduleStore = create<ScheduleState>()(
       },
       
       // 学習ブロック
-      addStudyBlock: (block) => {
-        // 新規追加時も一応補正をかける（念のため）
-        const fixed = fixUTCShift([block])[0]
-        set((s) => ({ studyBlocks: [...s.studyBlocks, fixed] }))
-      },
+      addStudyBlock: (block) => set((s) => ({ studyBlocks: [...s.studyBlocks, block] })),
       updateStudyBlock: (id, updates) => set((s) => ({
         studyBlocks: s.studyBlocks.map(b => b.id === id ? { ...b, ...updates } : b)
       })),
