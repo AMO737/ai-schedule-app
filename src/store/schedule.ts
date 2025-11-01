@@ -20,6 +20,43 @@ export interface CountdownTarget {
 // 固定予定の例外削除用
 export type FixedEventExceptions = { [key: string]: string[] | undefined }
 
+/**
+ * UTC日付ズレを補正する関数
+ * 既に保存されているUTC日付をローカル日付に変換する
+ */
+function fixUTCShift(blocks: StudyBlock[]): StudyBlock[] {
+  return (blocks || []).map((b) => {
+    if (!b.date) return b
+    
+    // "YYYY-MM-DD" 前提でパース
+    const [y, m, d] = b.date.split("-").map(Number)
+    
+    // 対象日だけに限定（2025-10-31以前のデータのみ補正）
+    // これは一時的な修正なので、2025-11-01以降のデータには適用しない
+    const targetDate = "2025-10-31"
+    if (b.date !== targetDate) {
+      // 補正不要な場合はそのまま返す
+      return b
+    }
+    
+    const dt = new Date(y, (m || 1) - 1, d || 1)
+    // UTCで前日になってるので +1日する
+    dt.setDate(dt.getDate() + 1)
+    
+    const yyyy = dt.getFullYear()
+    const mm = String(dt.getMonth() + 1).padStart(2, "0")
+    const dd = String(dt.getDate()).padStart(2, "0")
+    
+    const fixedDate = `${yyyy}-${mm}-${dd}`
+    
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+      console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
+    }
+    
+    return { ...b, date: fixedDate }
+  })
+}
+
 type ScheduleState = {
   // データ
   fixedEvents: FixedEvent[]
@@ -95,7 +132,11 @@ export const useScheduleStore = create<ScheduleState>()(
       },
       
       // 学習ブロック
-      addStudyBlock: (block) => set((s) => ({ studyBlocks: [...s.studyBlocks, block] })),
+      addStudyBlock: (block) => {
+        // 新規追加時も一応補正をかける（念のため）
+        const fixed = fixUTCShift([block])[0]
+        set((s) => ({ studyBlocks: [...s.studyBlocks, fixed] }))
+      },
       updateStudyBlock: (id, updates) => set((s) => ({
         studyBlocks: s.studyBlocks.map(b => b.id === id ? { ...b, ...updates } : b)
       })),
@@ -182,6 +223,11 @@ export const useScheduleStore = create<ScheduleState>()(
         if (error) {
           console.error('Rehydration error:', error)
           return
+        }
+        
+        // 既存のUTC日付ズレを補正
+        if (state) {
+          state.studyBlocks = fixUTCShift(state.studyBlocks)
         }
         
         if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
