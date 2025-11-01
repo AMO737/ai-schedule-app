@@ -130,35 +130,17 @@ export function NotificationSystem({
   // メール通知を送信
   const sendEmailNotification = async (notification: NotificationItem) => {
     try {
-      console.log('📧 メール通知を送信中:', {
-        email: emailSettings.email,
-        subject: notification.title,
-        message: notification.message
-      })
-      
-      const response = await fetch('/api/notify-email', {
+      await fetch('/api/notify-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: emailSettings.email,
           subject: notification.title,
-          text: notification.message,
-          html: `<p>${notification.message}</p><p><strong>時間:</strong> ${notification.time}</p>`
+          html: `<p>${notification.message}</p>`
         }),
       })
-      
-      const result = await response.json()
-      
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'メール送信に失敗しました')
-      }
-      
-      console.log('✅ メール通知を送信しました:', result)
     } catch (error) {
-      console.error('❌ メール送信エラー:', error)
-      // エラーはユーザーに通知しない（通知は生成済みなので）
+      console.error('メール送信エラー:', error)
     }
   }
 
