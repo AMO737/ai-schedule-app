@@ -32,18 +32,14 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
   
   // 初期データが変更されたときにフォームデータを更新
   useEffect(() => {
-    // Date型から YYYY-MM-DD 形式に変換する関数
+    // Date型から YYYY-MM-DD 形式に変換する関数（文字列をDateに変換しない）
     const formatDateToLocal = (date: Date | string): string => {
-      let d: Date
+      // 文字列の場合は先頭10文字を返す（YYYY-MM-DD）
       if (typeof date === 'string') {
-        // すでに YYYY-MM-DD 形式の場合はそのまま返す
-        if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          return date
-        }
-        d = new Date(date)
-      } else {
-        d = date
+        return date.slice(0, 10)
       }
+      // Date型の場合のみ変換
+      const d = date
       const yyyy = d.getFullYear()
       const mm = String(d.getMonth() + 1).padStart(2, '0')
       const dd = String(d.getDate()).padStart(2, '0')
