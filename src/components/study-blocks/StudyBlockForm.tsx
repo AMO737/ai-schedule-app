@@ -3,22 +3,22 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { StudyBlock } from '@/types'
+import { StudyBlock, LearningGoal } from '@/types'
 
 interface StudyBlockFormProps {
   onSubmit: (block: Omit<StudyBlock, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>
   onCancel: () => void
   initialData?: Partial<StudyBlock>
   selectedDate?: Date
+  learningGoal?: LearningGoal | null
 }
 
-const SUBJECT_OPTIONS = [
-  '英語', '数学', '国語', '理科', '社会', 'その他'
-]
-
-export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate }: StudyBlockFormProps) {
+export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, learningGoal }: StudyBlockFormProps) {
+  // 学習目標から科目選択肢を取得
+  const subjectOptions = learningGoal?.subject_distribution?.map(s => s.subject) || ['英語', '数学', '国語', '理科', '社会', 'その他']
+  
   const [formData, setFormData] = useState({
-    subject: '英語',
+    subject: subjectOptions[0] || '英語',
     scheduled_date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
     start_time: '07:00',
     end_time: '07:30',
@@ -27,6 +27,13 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate }
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // 学習目標が変更されたら初期値を更新
+  useEffect(() => {
+    if (subjectOptions.length > 0 && !subjectOptions.includes(formData.subject)) {
+      setFormData(prev => ({ ...prev, subject: subjectOptions[0] }))
+    }
+  }, [learningGoal])
 
   // 初期データが変更されたときにフォームデータを更新
   useEffect(() => {
@@ -126,7 +133,7 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate }
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         >
-          {SUBJECT_OPTIONS.map(subject => (
+          {subjectOptions.map(subject => (
             <option key={subject} value={subject}>
               {subject}
             </option>

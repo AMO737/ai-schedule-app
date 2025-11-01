@@ -65,3 +65,5 @@ export function WeeklyProgress({ userId }: WeeklyProgressProps) {
     </div>
   )
 }
+
+

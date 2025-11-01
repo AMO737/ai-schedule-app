@@ -737,6 +737,7 @@ export default function HomePage() {
                       }}
                       initialData={editingStudyBlock}
                       selectedDate={selectedDateForForm || undefined}
+                      learningGoal={learningGoal}
                     />
                   </div>
                 </div>
