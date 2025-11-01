@@ -19,9 +19,12 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
     if (externalStudyBlocks) {
       // 外部から渡されたstudyBlocksを使用
       const today = new Date().toISOString().split('T')[0]
+      console.log('[TodaySchedule] Today:', today)
+      console.log('[TodaySchedule] All blocks:', externalStudyBlocks)
       const todayBlocks = externalStudyBlocks.filter(block => 
         block.date && block.date.startsWith(today)
       ).sort((a, b) => a.start_time.localeCompare(b.start_time))
+      console.log('[TodaySchedule] Filtered today blocks:', todayBlocks)
       setBlocks(todayBlocks)
       setLoading(false)
     } else {
