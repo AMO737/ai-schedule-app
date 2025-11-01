@@ -406,7 +406,17 @@ export default function HomePage() {
                     ))
                   }}
                 />
-                <WeeklyProgress userId={currentUser.id} />
+                <WeeklyProgress 
+                  userId={currentUser.id}
+                  studyBlocks={studyBlocks}
+                  onUpdateBlock={(blockId, updates) => {
+                    setStudyBlocks(prev => prev.map(block => 
+                      block.id === blockId 
+                        ? { ...block, ...updates, updated_at: new Date().toISOString() }
+                        : block
+                    ))
+                  }}
+                />
               </div>
 
               {/* Right Column - Settings */}
