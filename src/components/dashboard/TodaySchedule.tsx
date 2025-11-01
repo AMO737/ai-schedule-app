@@ -116,8 +116,9 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
           <p className="text-gray-700">今日の学習ブロックがありません。</p>
           <p className="text-xs text-gray-500 mt-2">
             Debug: Total blocks: {externalStudyBlocks?.length || 0}, Today blocks: {todayBlocks.length}
+            <span className="block mt-1">Today's date: {new Date().toISOString().split('T')[0]}</span>
             {externalStudyBlocks && externalStudyBlocks.length > 0 && (
-              <span className="block mt-1">Dates: {externalStudyBlocks.slice(0, 3).map(b => b.date).join(', ')}</span>
+              <span className="block mt-1">Block dates: {externalStudyBlocks.slice(0, 3).map(b => b.date).join(', ')}</span>
             )}
           </p>
         </div>
