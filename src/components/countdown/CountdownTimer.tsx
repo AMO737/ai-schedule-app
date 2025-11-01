@@ -3,16 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { StudyBlock } from '@/types'
-
-interface CountdownTarget {
-  id: string
-  target_date: string
-  target_hours: number
-  completed_hours: number
-  title: string
-  created_at: string
-  updated_at: string
-}
+import { CountdownTarget } from '@/store/schedule'
 
 interface CountdownTimerProps {
   userId: string
@@ -54,6 +45,11 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
     const completedBlocks = studyBlocks.filter(block => {
       // ブロックが完了している
       if (!block.is_completed) return false
+      
+      // カテゴリが設定されている場合は、そのカテゴリのブロックのみカウント
+      if (target.category && block.subject !== target.category) {
+        return false
+      }
       
       // 目標日より前の日付
       const blockDate = new Date(block.date)

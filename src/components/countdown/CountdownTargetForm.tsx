@@ -1,29 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-
-interface CountdownTarget {
-  id: string
-  target_date: string
-  target_hours: number
-  completed_hours: number
-  title: string
-  created_at: string
-  updated_at: string
-}
+import { LearningGoal } from '@/types'
+import { CountdownTarget } from '@/store/schedule'
 
 interface CountdownTargetFormProps {
   onSubmit: (target: Omit<CountdownTarget, 'id'>) => Promise<void>
   onCancel: () => void
   initialData?: Partial<CountdownTarget>
+  learningGoal?: LearningGoal | null
 }
 
-export function CountdownTargetForm({ onSubmit, onCancel, initialData }: CountdownTargetFormProps) {
+export function CountdownTargetForm({ onSubmit, onCancel, initialData, learningGoal }: CountdownTargetFormProps) {
+  // 学習目標から科目選択肢を取得
+  const subjectOptions = useMemo(() => {
+    return learningGoal?.subject_distribution?.map(s => s.subject) || []
+  }, [learningGoal])
+
   const [formData, setFormData] = useState({
     title: '',
     target_date: '',
     target_hours: 50,
+    category: '',
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,6 +35,7 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
         title: initialData.title || '',
         target_date: initialData.target_date || '',
         target_hours: initialData.target_hours || 50,
+        category: initialData.category || '',
       }
       console.log('編集モード - フォームデータを設定:', newFormData)
       setFormData(newFormData)
@@ -45,11 +45,19 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
         title: '',
         target_date: '',
         target_hours: 50,
+        category: subjectOptions.length > 0 ? subjectOptions[0] : '',
       }
       console.log('新規作成モード - デフォルトデータを設定:', defaultFormData)
       setFormData(defaultFormData)
     }
-  }, [initialData])
+  }, [initialData, subjectOptions])
+
+  // 科目選択肢が変更されたら初期値を更新
+  useEffect(() => {
+    if (subjectOptions.length > 0 && !formData.category) {
+      setFormData(prev => ({ ...prev, category: subjectOptions[0] }))
+    }
+  }, [subjectOptions, formData.category])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,6 +80,11 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
       return
     }
 
+    if (formData.category && subjectOptions.length > 0 && !subjectOptions.includes(formData.category)) {
+      alert('有効な科目を選択してください。')
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -79,6 +92,7 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
         title: formData.title.trim(),
         target_date: formData.target_date,
         target_hours: formData.target_hours,
+        category: formData.category || undefined,
         completed_hours: 0, // 自動計算される
         created_at: initialData?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -105,10 +119,31 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
     })
   }
 
-
-
   // 今日の日付を取得（最小値として設定）
   const today = new Date().toISOString().split('T')[0]
+
+  // 学習目標が設定されていない場合
+  if (!learningGoal || subjectOptions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-sm text-yellow-800">
+            ⚠️ カウントダウン目標を追加するには、まず「学習目標」で科目配分を設定してください。
+          </p>
+        </div>
+        <div className="flex space-x-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+          >
+            閉じる
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -125,6 +160,28 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+          強化項目（カテゴリ）
+        </label>
+        <select
+          id="category"
+          value={formData.category}
+          onChange={(e) => handleChange('category', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        >
+          {subjectOptions.map(subject => (
+            <option key={subject} value={subject}>
+              {subject}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          ※ このカテゴリの学習ブロックのみ進捗にカウントされます
+        </p>
       </div>
 
       <div>
@@ -158,7 +215,7 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
           required
         />
         <p className="text-xs text-gray-500 mt-1">
-          ※ 完了時間は学習ブロックの完了状況から自動計算されます
+          ※ 完了時間は選択したカテゴリの学習ブロックの完了状況から自動計算されます
         </p>
       </div>
 
@@ -173,7 +230,7 @@ export function CountdownTargetForm({ onSubmit, onCancel, initialData }: Countdo
               const diffDays = Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
               return diffDays > 0 ? `${diffDays}日` : '期限切れ'
             })()}</div>
-            <div>完了率: 0.0% (学習ブロック完了後に自動更新)</div>
+            <div>完了率: 0.0% ({formData.category ? formData.category : '全体'}の学習ブロック完了後に自動更新)</div>
             <div>残り学習時間: {formData.target_hours}時間</div>
           </div>
         </div>

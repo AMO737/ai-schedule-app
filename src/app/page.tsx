@@ -381,7 +381,7 @@ export default function HomePage() {
                     const newTarget = {
                       ...targetData,
                       id: `target-${Date.now()}`,
-                      completedHours: 0
+                      completed_hours: 0
                     }
                     const updated = [...countdownTargets, newTarget]
                     setCountdownTargets(updated)
@@ -653,6 +653,7 @@ export default function HomePage() {
                         setShowCountdownTargetForm(false)
                       }}
                       initialData={editingCountdownTarget}
+                      learningGoal={learningGoal}
                     />
                   </div>
                 </div>
