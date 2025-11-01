@@ -25,35 +25,80 @@ export type FixedEventExceptions = { [key: string]: string[] | undefined }
  * 既に保存されているUTC日付をローカル日付に変換する
  */
 function fixUTCShift(blocks: StudyBlock[]): StudyBlock[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
   return (blocks || []).map((b) => {
     if (!b.date) return b
     
     // "YYYY-MM-DD" 形式の日付のみ対象
     if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date)) return b
     
-    // 元の日付をローカルとしてパース
     const [y, m, d] = b.date.split("-").map(Number)
     const local = new Date(y, (m || 1) - 1, d || 1)
+    local.setHours(0, 0, 0, 0)
     
     // UTCで文字列にすると1日前扱いになるかチェック
     const utcStr = local.toISOString().split("T")[0]
     
-    // もし utcStr が元の b.date より「1日だけ前」なら +1 して補正
-    if (utcStr < b.date) {
-      const fixed = new Date(local.getTime())
-      fixed.setDate(fixed.getDate() + 1)
+    // 差を計算（ミリ秒→日）
+    const utcDate = new Date(utcStr + "T00:00:00")
+    const diffMs = local.getTime() - utcDate.getTime()
+    const diffDays = diffMs / (1000 * 60 * 60 * 24)
+    
+    // 1日より大きくズレていたら触らない（無限進むのを防ぐ）
+    if (diffDays < 1 || diffDays > 1) {
+      return b
+    }
+    
+    // ここまで来たら「UTCにすると1日前になる」パターンなので +1日する
+    const fixed = new Date(local.getTime())
+    fixed.setDate(fixed.getDate() + 1)
+    
+    const yyyy = fixed.getFullYear()
+    const mm = String(fixed.getMonth() + 1).padStart(2, "0")
+    const dd = String(fixed.getDate()).padStart(2, "0")
+    
+    const fixedDate = `${yyyy}-${mm}-${dd}`
+    
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+      console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
+    }
+    
+    return { ...b, date: fixedDate }
+  })
+}
+
+/**
+ * 未来に飛びすぎた日付を修正する関数
+ * 3日以上未来のデータを今日に戻す（一時的）
+ */
+function clampFuture(blocks: StudyBlock[]): StudyBlock[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  return (blocks || []).map((b) => {
+    if (!b.date) return b
+    
+    const [y, m, d] = b.date.split("-").map(Number)
+    const dt = new Date(y, (m || 1) - 1, d || 1)
+    dt.setHours(0, 0, 0, 0)
+    
+    const diffDays = (dt.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    
+    // 3日以上未来なら今日に戻す（暫定）
+    if (diffDays >= 3) {
+      const yyyy = today.getFullYear()
+      const mm = String(today.getMonth() + 1).padStart(2, "0")
+      const dd = String(today.getDate()).padStart(2, "0")
       
-      const yyyy = fixed.getFullYear()
-      const mm = String(fixed.getMonth() + 1).padStart(2, "0")
-      const dd = String(fixed.getDate()).padStart(2, "0")
-      
-      const fixedDate = `${yyyy}-${mm}-${dd}`
+      const clampedDate = `${yyyy}-${mm}-${dd}`
       
       if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
-        console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
+        console.log(`[clampFuture] Clamped date from ${b.date} to ${clampedDate}`)
       }
       
-      return { ...b, date: fixedDate }
+      return { ...b, date: clampedDate }
     }
     
     return b
@@ -70,6 +115,9 @@ type ScheduleState = {
   
   // ハイドレーション完了フラグ
   hasHydrated: boolean
+  
+  // マイグレーションフラグ
+  migratedUtcFix?: boolean // UTC日付ズレ補正を行ったか
   
   // アクション - 固定予定
   addFixedEvent: (event: FixedEvent) => void
@@ -114,6 +162,7 @@ export const useScheduleStore = create<ScheduleState>()(
       countdownTargets: [],
       fixedEventExceptions: {},
       hasHydrated: false,
+      migratedUtcFix: false,
       
       // ハイドレーション
       setHasHydrated: (value) => set({ hasHydrated: value }),
@@ -224,9 +273,17 @@ export const useScheduleStore = create<ScheduleState>()(
           return
         }
         
-        // 既存のUTC日付ズレを補正
-        if (state) {
-          state.studyBlocks = fixUTCShift(state.studyBlocks)
+        if (!state) return
+        
+        // UTC日付ズレを補正（1回限り）
+        if (!state.migratedUtcFix) {
+          state.studyBlocks = fixUTCShift(state.studyBlocks || [])
+          state.studyBlocks = clampFuture(state.studyBlocks || [])
+          state.migratedUtcFix = true
+          
+          if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+            console.log("✅ UTC日付ズレ補正を実行しました")
+          }
         }
         
         if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
@@ -241,17 +298,15 @@ export const useScheduleStore = create<ScheduleState>()(
         }
         
         // ハイドレーション完了フラグを設定
-        if (state) {
-          state.setHasHydrated(true)
-          
-          // Cookieにも保存（IndexedDBのバックアップ）
-          if (typeof window !== 'undefined') {
-            fetch('/api/state', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ data: state })
-            }).catch(err => console.error('Cookie保存エラー:', err))
-          }
+        state.setHasHydrated(true)
+        
+        // Cookieにも保存（IndexedDBのバックアップ）
+        if (typeof window !== 'undefined') {
+          fetch('/api/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: state })
+          }).catch(err => console.error('Cookie保存エラー:', err))
         }
       }
     }
