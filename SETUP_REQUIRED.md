@@ -24,25 +24,20 @@
 2. **プロジェクトを選択**: "schedule-app-gold-tau"
 3. **Settings** → **Environment Variables**
 4. **"Add New"** をクリック
-5. 以下を入力:
 
-```
-Key: RESEND_API_KEY
-Value: re_xxxxxxxxxxxxxxxx（Resendからコピーしたキー）
-Environment: Production, Preview, Development すべてにチェック✅
-```
+**重要**: "Link To Projects" は**スキップしてください**（環境変数には不要です）
 
-6. **"Save"** をクリック
+5. **RESEND_API_KEY を追加**:
+   - **Key**: `RESEND_API_KEY`
+   - **Value**: `re_xxxxxxxxxxxxxxxx`（Resendからコピーしたキー）
+   - **Environment**: `Production`, `Preview`, `Development` すべてにチェック✅
+   - **"Save"** をクリック
 
-7. **EMAIL_FROM も追加（推奨）**:
-
-```
-Key: EMAIL_FROM
-Value: Study App <noreply@yourdomain.com>
-Environment: Production, Preview, Development すべてにチェック✅
-```
-
-8. **"Save"** をクリック
+6. **EMAIL_FROM も追加（推奨）**:
+   - **Key**: `EMAIL_FROM`
+   - **Value**: `Study App <noreply@yourdomain.com>`
+   - **Environment**: `Production`, `Preview`, `Development` すべてにチェック✅
+   - **"Save"** をクリック
 
 ### ステップ3: 再デプロイ
 
@@ -93,17 +88,22 @@ Vercel Dashboard
 │ ☑️ Preview                      │
 │ ☑️ Development                  │
 │                                  │
-│         [Save]                   │
+│ [Save]                          │
 └─────────────────────────────────┘
+
+⚠️ "Link To Projects" フィールドは無視してください（不要です）
 ```
 
 ## ❓ よくある質問
+
+### Q: "Link To Projects" は何ですか？必要ですか？
+**A**: 無視してください。環境変数の設定には不要です。スキップしてOKです。
 
 ### Q: 環境変数を設定したのにエラーが出る
 **A**: 再デプロイが必要です。ステップ3を実行してください。
 
 ### Q: Resendの無料プランの制限は？
-**A**: 月100通まで。テストドメインは3通まで。
+**A**: 月100通まで。テストドメイン（`onboarding.resend.dev`）は3通まで。
 
 ### Q: 環境変数はどこで確認できる？
 **A**: Vercel Dashboard → Settings → Environment Variables
