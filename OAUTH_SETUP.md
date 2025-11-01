@@ -53,11 +53,12 @@
 **SupabaseのRedirect URL設定を確認**:
 - Supabase Dashboard → **Authentication** → **URL Configuration**
 - **Site URL**: `https://schedule-app-gold-tau.vercel.app`
-- **Redirect URLs**: 以下を追加
+- **Redirect URLs**: 以下を追加（各行を個別に追加）
   ```
   https://schedule-app-gold-tau.vercel.app/auth/callback
-  https://schedule-app-gold-tau.vercel.app/**
   http://localhost:3000/auth/callback
+  http://localhost:3001/auth/callback
+  capacitor://localhost/auth/callback
   ```
 
 ## ステップ3: 動作確認
