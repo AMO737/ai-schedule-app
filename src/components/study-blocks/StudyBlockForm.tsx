@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { StudyBlock, LearningGoal } from '@/types'
@@ -15,10 +15,12 @@ interface StudyBlockFormProps {
 
 export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, learningGoal }: StudyBlockFormProps) {
   // 学習目標から科目選択肢を取得
-  const subjectOptions = learningGoal?.subject_distribution?.map(s => s.subject) || ['英語', '数学', '国語', '理科', '社会', 'その他']
+  const subjectOptions = useMemo(() => {
+    return learningGoal?.subject_distribution?.map(s => s.subject) || []
+  }, [learningGoal])
   
   const [formData, setFormData] = useState({
-    subject: subjectOptions[0] || '英語',
+    subject: '',
     scheduled_date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
     start_time: '07:00',
     end_time: '07:30',
@@ -30,10 +32,13 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
   
   // 学習目標が変更されたら初期値を更新
   useEffect(() => {
-    if (subjectOptions.length > 0 && !subjectOptions.includes(formData.subject)) {
-      setFormData(prev => ({ ...prev, subject: subjectOptions[0] }))
+    if (subjectOptions.length > 0) {
+      // 現在の科目が選択肢にない場合、または初期値が空の場合
+      if (!formData.subject || !subjectOptions.includes(formData.subject)) {
+        setFormData(prev => ({ ...prev, subject: subjectOptions[0] }))
+      }
     }
-  }, [learningGoal])
+  }, [learningGoal, subjectOptions, formData.subject])
 
   // 初期データが変更されたときにフォームデータを更新
   useEffect(() => {
@@ -120,6 +125,29 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
     return durationMinutes
   }
 
+  // 学習目標が設定されていない場合
+  if (!learningGoal || subjectOptions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-sm text-yellow-800">
+            ⚠️ 学習ブロックを追加するには、まず「学習目標」で科目配分を設定してください。
+          </p>
+        </div>
+        <div className="flex space-x-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+          >
+            閉じる
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
@@ -139,6 +167,9 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
             </option>
           ))}
         </select>
+        <p className="text-xs text-gray-500 mt-1">
+          ※ 学習目標で設定した科目のみ選択できます
+        </p>
       </div>
 
       <div>
