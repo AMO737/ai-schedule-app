@@ -23,11 +23,50 @@ export type FixedEventExceptions = { [key: string]: string[] | undefined }
 /**
  * UTC日付ズレを補正する関数
  * 既に保存されているUTC日付をローカル日付に変換する
- * 注意: 現在は補正が完了しているため、実質無効化されている
+ * 過去で1日ズレている日付のみを補正する
  */
 function fixUTCShift(blocks: StudyBlock[]): StudyBlock[] {
-  // 補正済みデータはそのまま返す
-  return blocks
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  return (blocks || []).map((b) => {
+    if (!b.date) return b
+    
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date)) return b
+    
+    // ブロックの日付
+    const [y, m, d] = b.date.split("-").map(Number)
+    const local = new Date(y, (m || 1) - 1, d || 1)
+    local.setHours(0, 0, 0, 0)
+    
+    // ① 未来の日付は絶対にいじらない
+    if (local.getTime() > today.getTime()) {
+      return b
+    }
+    
+    // ② UTCにすると1日前になってしまうパターンだけ直す
+    const utcStr = local.toISOString().split("T")[0]
+    
+    // 例: 元は 2025-11-01 なのに utcStr が 2025-10-31 になる
+    if (utcStr < b.date) {
+      const fixed = new Date(local.getTime())
+      fixed.setDate(fixed.getDate() + 1)
+      
+      const yyyy = fixed.getFullYear()
+      const mm = String(fixed.getMonth() + 1).padStart(2, "0")
+      const dd = String(fixed.getDate()).padStart(2, "0")
+      
+      const fixedDate = `${yyyy}-${mm}-${dd}`
+      
+      if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+        console.log(`[fixUTCShift] Fixed date from ${b.date} to ${fixedDate}`)
+      }
+      
+      return { ...b, date: fixedDate }
+    }
+    
+    return b
+  })
 }
 
 /**
@@ -213,7 +252,6 @@ export const useScheduleStore = create<ScheduleState>()(
         // UTC日付ズレを補正（1回限り）
         if (!state.migratedUtcFix) {
           state.studyBlocks = fixUTCShift(state.studyBlocks || [])
-          state.studyBlocks = clampFuture(state.studyBlocks || [])
           state.migratedUtcFix = true
           
           if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
