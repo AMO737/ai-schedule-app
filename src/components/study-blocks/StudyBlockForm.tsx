@@ -44,7 +44,7 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
   useEffect(() => {
     if (initialData) {
       setFormData({
-        subject: initialData.subject || '英語',
+        subject: initialData.subject || '',
         scheduled_date: (initialData as any).scheduled_date || initialData.date || (selectedDate ? selectedDate.toISOString().split('T')[0] : ''),
         start_time: initialData.start_time || '07:00',
         end_time: initialData.end_time || '07:30',
