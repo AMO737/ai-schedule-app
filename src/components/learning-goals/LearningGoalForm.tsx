@@ -35,11 +35,7 @@ export function LearningGoalForm({ onSubmit, onCancel, initialData }: LearningGo
     is_active: true,
   })
 
-  const [subjects, setSubjects] = useState<SubjectDistribution[]>([
-    { subject: '英語', percentage: 40 },
-    { subject: '数学', percentage: 30 },
-    { subject: 'その他', percentage: 30 },
-  ])
+  const [subjects, setSubjects] = useState<SubjectDistribution[]>([])
 
   // 初期データが変更されたときにフォームデータを更新
   useEffect(() => {

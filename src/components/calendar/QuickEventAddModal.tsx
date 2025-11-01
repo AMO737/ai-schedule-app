@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { LearningGoal } from '@/types'
 
 interface QuickEventAddModalProps {
   isOpen: boolean
   onClose: () => void
   selectedDate: Date
   selectedTime: string
+  learningGoal?: LearningGoal | null
   onAddEvent: (eventData: {
     title: string
     startTime: string
@@ -24,19 +26,32 @@ export function QuickEventAddModal({
   onClose,
   selectedDate,
   selectedTime,
+  learningGoal,
   onAddEvent
 }: QuickEventAddModalProps) {
+  // 学習目標から科目選択肢を取得
+  const subjectOptions = useMemo(() => {
+    return learningGoal?.subject_distribution?.map(s => s.subject) || []
+  }, [learningGoal])
+
   const [formData, setFormData] = useState({
     title: '',
     startTime: selectedTime,
     endTime: '',
     color: '#3B82F6',
     type: 'study-block' as 'study-block',
-    subject: '英語',
+    subject: '',
     hasAlarm: false
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // 科目選択肢が変更されたら初期値を更新
+  useEffect(() => {
+    if (subjectOptions.length > 0 && !formData.subject) {
+      setFormData(prev => ({ ...prev, subject: subjectOptions[0] }))
+    }
+  }, [subjectOptions, formData.subject])
 
   // selectedTimeが変更されたときにstartTimeを更新
   useEffect(() => {
@@ -58,15 +73,16 @@ export function QuickEventAddModal({
     { name: 'シアン', value: '#06B6D4' }
   ]
 
-  const subjectOptions = [
-    '英語', '数学', '国語', '理科', '社会', 'その他'
-  ]
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.endTime) {
       alert('終了時間を入力してください。')
+      return
+    }
+
+    if (!formData.subject) {
+      alert('科目を選択してください。')
       return
     }
 
@@ -103,6 +119,42 @@ export function QuickEventAddModal({
   }
 
   if (!isOpen) return null
+
+  // 学習目標が設定されていない場合
+  if (!learningGoal || subjectOptions.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">予定を追加</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                ⚠️ 学習ブロックを追加するには、まず「学習目標」で科目配分を設定してください。
+              </p>
+            </div>
+            <div className="flex space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+              >
+                閉じる
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -155,6 +207,9 @@ export function QuickEventAddModal({
                   </option>
                 ))}
               </select>
+              <p className="text-xs text-gray-500 mt-1">
+                ※ 学習目標で設定した科目のみ選択できます
+              </p>
             </div>
 
             {/* 時間設定 */}

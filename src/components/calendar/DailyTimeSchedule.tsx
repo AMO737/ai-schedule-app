@@ -236,7 +236,7 @@ export function DailyTimeSchedule({
       const newStudyBlock: StudyBlock = {
         id: generateId(),
         user_id: 'demo-user',
-        subject: eventData.subject || '英語',
+        subject: eventData.subject || '',
         date: selectedDate.toISOString().split('T')[0],
         start_time: eventData.startTime,
         end_time: eventData.endTime,
@@ -566,6 +566,7 @@ export function DailyTimeSchedule({
         onClose={() => setShowQuickAddModal(false)}
         selectedDate={selectedDate}
         selectedTime={selectedTimeSlot}
+        learningGoal={learningGoal}
         onAddEvent={handleQuickAddEvent}
       />
     </div>
