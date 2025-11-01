@@ -21,7 +21,7 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
   
   const [formData, setFormData] = useState({
     subject: '',
-    scheduled_date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+    scheduled_date: '',
     start_time: '07:00',
     end_time: '07:30',
     color: '#10B981',
@@ -30,16 +30,6 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // 学習目標が変更されたら初期値を更新
-  useEffect(() => {
-    if (subjectOptions.length > 0) {
-      // 現在の科目が選択肢にない場合、または初期値が空の場合
-      if (!formData.subject || !subjectOptions.includes(formData.subject)) {
-        setFormData(prev => ({ ...prev, subject: subjectOptions[0] }))
-      }
-    }
-  }, [learningGoal, subjectOptions, formData.subject])
-
   // 初期データが変更されたときにフォームデータを更新
   useEffect(() => {
     if (initialData) {
@@ -53,12 +43,23 @@ export function StudyBlockForm({ onSubmit, onCancel, initialData, selectedDate, 
       })
     } else if (selectedDate) {
       // 新規作成時は選択された日付を使用
-      setFormData(prev => ({
-        ...prev,
-        scheduled_date: selectedDate.toISOString().split('T')[0]
-      }))
+      setFormData({
+        subject: subjectOptions.length > 0 ? subjectOptions[0] : '',
+        scheduled_date: selectedDate.toISOString().split('T')[0],
+        start_time: '07:00',
+        end_time: '07:30',
+        color: '#10B981',
+        is_completed: false,
+      })
     }
-  }, [initialData, selectedDate])
+  }, [initialData, selectedDate, subjectOptions])
+  
+  // 学習目標が変更されたら科目を更新
+  useEffect(() => {
+    if (subjectOptions.length > 0 && !formData.subject) {
+      setFormData(prev => ({ ...prev, subject: subjectOptions[0] }))
+    }
+  }, [learningGoal, subjectOptions, formData.subject])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
