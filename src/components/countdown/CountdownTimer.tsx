@@ -65,6 +65,11 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
 
     // ブロックの時間を計算（分を時間に変換）
     const totalMinutes = completedBlocks.reduce((sum, block) => {
+      // durationがブロックに設定されている場合はそれを使用
+      if (block.duration) {
+        return sum + block.duration
+      }
+      // なければ開始時間と終了時間から計算
       const startTime = new Date(`2000-01-01T${block.start_time}`)
       const endTime = new Date(`2000-01-01T${block.end_time}`)
       const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60)
@@ -88,7 +93,7 @@ export function CountdownTimer({ userId, studyBlocks, targets: externalTargets, 
     if (currentTargets.length > 0) {
       const updatedTargets = currentTargets.map(target => ({
         ...target,
-        completedHours: calculateCompletedHours(target)
+        completed_hours: calculateCompletedHours(target)
       }))
       
       // 変更があった場合のみ更新

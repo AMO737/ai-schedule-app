@@ -12,6 +12,7 @@ export interface CountdownTarget {
   target_hours: number
   completed_hours: number
   title: string
+  category?: string // カテゴリ（強化項目）
   created_at: string
   updated_at: string
 }
