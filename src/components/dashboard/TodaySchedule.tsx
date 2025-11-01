@@ -99,7 +99,10 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
       <h2 className="text-xl font-semibold mb-4">今日の学習スケジュール</h2>
       
       {blocks.length === 0 ? (
-        <p className="text-gray-700">今日の学習ブロックがありません。</p>
+        <div>
+          <p className="text-gray-700">今日の学習ブロックがありません。</p>
+          <p className="text-xs text-gray-500 mt-2">Debug: Total blocks: {externalStudyBlocks?.length || 0}, Today blocks: {todayBlocks.length}</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {blocks.map((block) => (
