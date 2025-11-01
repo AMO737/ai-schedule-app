@@ -91,3 +91,16 @@ export interface NotificationSettings {
   enable_push_notifications: boolean
   enable_email_notifications: boolean
 }
+
+// Unified schedule interface for both calendar and dashboard
+export interface Schedule {
+  id: string
+  user_id: string
+  title: string
+  start_at: string // ISO 8601 string
+  end_at?: string // ISO 8601 string
+  subject?: string
+  is_done: boolean
+  created_at?: string
+  updated_at?: string
+}
