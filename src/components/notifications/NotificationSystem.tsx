@@ -167,9 +167,15 @@ export function NotificationSystem({
         }),
       })
       const json = await res.json()
-      console.log('[EMAIL_SENT]', json)
+      
+      if (json.ok) {
+        console.log('[EMAIL_SENT]', json)
+      } else {
+        console.error('[EMAIL_ERROR]', json.error, json.details)
+        // エラーでもブラウザ通知は表示する
+      }
 
-      // ブラウザ通知も同時に出す
+      // ブラウザ通知も同時に出す（メールの成功/失敗に関わらず）
       if (typeof window !== 'undefined' && 'Notification' in window) {
         if (Notification.permission === 'granted') {
           new Notification(subject, { body })
@@ -183,6 +189,13 @@ export function NotificationSystem({
       }
     } catch (error) {
       console.error('[EMAIL_ERROR]', error)
+      
+      // エラーでもブラウザ通知は表示する
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification(subject, { body })
+        }
+      }
     }
   }
 
