@@ -35,19 +35,31 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
     console.log('[TodaySchedule] All block dates:', externalStudyBlocks.map(b => ({ id: b.id, date: b.date, subject: b.subject })))
     const filtered = externalStudyBlocks.filter(block => {
       // dateフィールドを確認
-      const blockDateStr = block.date
-      if (!blockDateStr) {
+      if (!block?.date) {
         console.log('[TodaySchedule] Block has no date:', block.id)
         return false
       }
-      // 日付文字列の最初の10文字（YYYY-MM-DD）を比較
-      const blockDateOnly = blockDateStr.substring(0, 10)
-      const matches = blockDateOnly === today
-      if (!matches) {
-        console.log('[TodaySchedule] Date mismatch:', blockDateOnly, 'vs', today)
+      
+      // "YYYY-MM-DD" だけを見る（ISO文字列の場合も対応）
+      const raw = block.date
+      const d = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10)
+      
+      // 明日以降は絶対に表示しない
+      if (d > today) {
+        console.log('[TodaySchedule] Future date excluded:', d, '>', today)
+        return false
       }
-      return matches
-    }).sort((a, b) => a.start_time.localeCompare(b.start_time))
+      
+      // 過去は表示しない（今日は表示）
+      if (d < today) {
+        console.log('[TodaySchedule] Past date excluded:', d, '<', today)
+        return false
+      }
+      
+      // ここまで来たら今日
+      console.log('[TodaySchedule] Today\'s block:', d, '==', today)
+      return true
+    }).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
     console.log('[TodaySchedule] Filtered blocks:', filtered)
     return filtered
   }, [externalStudyBlocks])
