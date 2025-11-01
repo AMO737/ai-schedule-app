@@ -34,6 +34,23 @@ export function NotificationSystem({
     email: '' 
   })
 
+  // 送信済みメールIDを読み込む
+  const loadSentEmailIds = (): string[] => {
+    if (typeof window === "undefined") return []
+    try {
+      const raw = localStorage.getItem("sent-email-ids")
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  }
+
+  // 送信済みメールIDを保存する
+  const saveSentEmailIds = (ids: string[]) => {
+    if (typeof window === "undefined") return
+    localStorage.setItem("sent-email-ids", JSON.stringify(ids))
+  }
+
   // EmailNotificationSettingsから設定を読み込む
   useEffect(() => {
     const savedSettings = localStorage.getItem('email_notification_settings')
@@ -51,7 +68,7 @@ export function NotificationSystem({
   }, [])
 
   // 通知を生成する関数
-  const generateNotifications = () => {
+  const generateNotifications = async () => {
     const newNotifications: NotificationItem[] = []
     const today = new Date()
     const yyyy = today.getFullYear()
@@ -116,31 +133,56 @@ export function NotificationSystem({
       const existingIds = prev.map(n => n.id)
       const uniqueNewNotifications = newNotifications.filter(n => !existingIds.includes(n.id))
       
-      // メール通知を送信（有効な場合）
-      if (emailSettings.enabled && emailSettings.email && uniqueNewNotifications.length > 0) {
-        sendEmailNotification(uniqueNewNotifications[0])
-      }
-      
       return [...prev, ...uniqueNewNotifications].sort((a, b) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
     })
+
+    // メール通知を送信（有効な場合）
+    if (emailSettings.enabled && emailSettings.email && newNotifications.length > 0) {
+      const sent = loadSentEmailIds()
+      
+      for (const notification of newNotifications) {
+        // 重複チェック
+        if (!sent.includes(notification.id)) {
+          await sendEmailNotification(emailSettings.email, notification.title, notification.message)
+          sent.push(notification.id)
+          saveSentEmailIds(sent)
+        }
+      }
+    }
   }
 
   // メール通知を送信
-  const sendEmailNotification = async (notification: NotificationItem) => {
+  const sendEmailNotification = async (to: string, subject: string, body: string) => {
     try {
-      await fetch('/api/notify-email', {
+      const res = await fetch('/api/notify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: emailSettings.email,
-          subject: notification.title,
-          html: `<p>${notification.message}</p>`
+          to,
+          subject,
+          html: `<p>${body}</p>`,
+          text: body,
         }),
       })
+      const json = await res.json()
+      console.log('[EMAIL_SENT]', json)
+
+      // ブラウザ通知も同時に出す
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification(subject, { body })
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              new Notification(subject, { body })
+            }
+          })
+        }
+      }
     } catch (error) {
-      console.error('メール送信エラー:', error)
+      console.error('[EMAIL_ERROR]', error)
     }
   }
 
@@ -275,6 +317,25 @@ export function NotificationSystem({
               <EmailNotificationSettings
                 onSettingsChange={setEmailSettings}
               />
+              
+              {/* テストメール送信ボタン */}
+              {emailSettings.enabled && emailSettings.email && (
+                <div className="mt-4">
+                  <button
+                    onClick={async () => {
+                      await sendEmailNotification(
+                        emailSettings.email,
+                        'テスト通知',
+                        'これはテストメールです。メール通知が正しく動作しています。'
+                      )
+                      alert('テストメールを送信しました')
+                    }}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    テストメール送信
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
