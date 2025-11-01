@@ -3,9 +3,9 @@
 ## 検証日時
 2025-01-27
 
-## 現在の実装状況
+## ✅ 実装完了
 
-### ✅ 実装済み
+### 実装済み機能
 
 1. **通知設定管理**
    - メール通知の有効/無効切り替え
@@ -25,17 +25,11 @@
    - 既読/削除ボタン
    - メール設定フォーム
 
-### ❌ 未実装
-
-1. **メール送信機能**
-   - 現在は `console.log` のみで実装
-   - 実際のメール送信は行われない
-   - `sendEmailNotification` 関数は TODO コメント状態
-
-2. **メール送信 API**
-   - サーバーサイドのメール送信エンドポイントがない
-   - Supabase のメール機能も未設定
-   - サードパーティサービス（SendGrid, Mailgun など）の統合なし
+4. **メール送信機能** ✅ **実装完了**
+   - Resend API との統合
+   - `/api/notify-email` エンドポイントの実装
+   - `sendEmailNotification` 関数の実装
+   - エラーハンドリング
 
 ## 検証結果
 
@@ -58,9 +52,10 @@
 
 #### 3. メール通知トリガー
 ```
-⚠️ emailSettings の読み込みが欠けていた（修正済み）
+✅ emailSettings の読み込み（修正済み）
 ✅ 設定有効時に sendEmailNotification が呼ばれる
-⚠️ sendEmailNotification は console.log のみ
+✅ sendEmailNotification で実際のメール送信（実装完了）
+✅ Resend API 統合完了
 ```
 
 ### 問題点と修正内容
@@ -100,45 +95,21 @@ const dd = String(today.getDate()).padStart(2, '0')
 const todayStr = `${yyyy}-${mm}-${dd}`
 ```
 
-## 今後の実装が必要な機能
+## 追加実装が必要な機能
 
-### 必須
+### ✅ 完了した実装
 
-1. **メール送信 API の実装**
-   ```typescript
-   // /api/send-email/route.ts
-   export async function POST(req: Request) {
-     const { to, subject, body } = await req.json()
-     
-     // SendGrid, Mailgun, または Supabase を使用
-     // ...
-   }
-   ```
+1. **メール送信 API の実装** ✅
+   - `/api/notify-email/route.ts` を作成
+   - Resend API と統合
+   - 環境変数 `RESEND_API_KEY` を使用
 
-2. **sendEmailNotification の実装**
-   ```typescript
-   const sendEmailNotification = async (notification: NotificationItem) => {
-     try {
-       const response = await fetch('/api/send-email', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
-           to: emailSettings.email,
-           subject: notification.title,
-           body: notification.message
-         })
-       })
-       
-       if (!response.ok) throw new Error('Email sending failed')
-       
-       console.log('✅ メール通知を送信しました')
-     } catch (error) {
-       console.error('❌ メール送信エラー:', error)
-     }
-   }
-   ```
+2. **sendEmailNotification の実装** ✅
+   - Resend API への `fetch` リクエスト
+   - HTML/Text 両形式のサポート
+   - エラーハンドリング
 
-### 推奨
+### 推奨される追加機能
 
 1. **バックグラウンド通知**
    - ブラウザが閉じていても通知を受け取れるようにする
@@ -208,16 +179,30 @@ describe('NotificationSystem', () => {
 ### 現在の状態
 - ✅ **通知生成機能**: 正常動作
 - ✅ **設定管理機能**: 正常動作（修正済み）
-- ⚠️ **メール送信機能**: 未実装（console.log のみ）
+- ✅ **メール送信機能**: 実装完了
 
-### 次のステップ
-1. メール送信 API の実装
-2. `sendEmailNotification` の実装
-3. メール送信のテスト
-4. エラーハンドリングの強化
+### セットアップが必要なもの
+
+1. **Resend API キーの設定**
+   ```bash
+   # Vercel 環境変数に追加
+   RESEND_API_KEY=your_resend_api_key_here
+   ```
+
+2. **Resend ドメイン設定**
+   - Resend ダッシュボードでドメインを追加
+   - DNS レコードを設定
+   - 送信元メールアドレスを変更（現在は `noreply@yourapp.com`）
+
+### テスト方法
+
+1. Resend API キーを環境変数に設定
+2. アラーム付き学習ブロックを作成（開始30分前）
+3. メール通知設定を有効化してメールアドレスを入力
+4. 通知生成時にメールが送信されることを確認
 
 ### 注意事項
-- **重要**: 現時点では**メールは実際に送信されません**
-- 通知設定は保存されるが、実際の送信は行われない
-- ブラウザのコンソールにログが出力されるのみ
+- ✅ **メールは実際に送信されます**
+- Resend API キーが正しく設定されている必要があります
+- Resend の無料プランは月100通まで送信可能です
 
