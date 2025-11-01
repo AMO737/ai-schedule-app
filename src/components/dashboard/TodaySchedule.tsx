@@ -17,25 +17,36 @@ export function TodaySchedule({ userId, studyBlocks: externalStudyBlocks, onUpda
 
   // 今日のブロックを計算
   const todayBlocks = useMemo(() => {
-    console.log('[TodaySchedule] useMemo called, externalStudyBlocks:', externalStudyBlocks)
-    if (!externalStudyBlocks || externalStudyBlocks.length === 0) {
-      console.log('[TodaySchedule] No external study blocks')
-      return []
-    }
-    // JSTベースの今日を計算
+    // ① 今日のローカル日付を文字列で作る（絶対にtoISOStringしない）
     const now = new Date()
     const yyyy = now.getFullYear()
     const mm = String(now.getMonth() + 1).padStart(2, '0')
     const dd = String(now.getDate()).padStart(2, '0')
-    const today = `${yyyy}-${mm}-${dd}` // ← JSTベースの今日
+    const today = `${yyyy}-${mm}-${dd}`
     
-    const todayBlocks = externalStudyBlocks
-      .filter((b) => {
-        if (!b.date) return false
-        const d = b.date.slice(0, 10)
-        return d === today
-      })
+    console.log('[TodaySchedule] today=', today)
+    console.log('[TodaySchedule] raw blocks=', externalStudyBlocks)
+    
+    if (!externalStudyBlocks || externalStudyBlocks.length === 0) {
+      console.log('[TodaySchedule] No external study blocks')
+      return []
+    }
+    
+    // ② すべてのブロックの日付を10文字に落とす
+    const normalized = externalStudyBlocks.map((b) => {
+      const raw = b.date ?? ""
+      const onlyDate = raw.includes("T") ? raw.slice(0, 10) : raw
+      return { ...b, date: onlyDate }
+    })
+    
+    console.log('[TodaySchedule] normalized=', normalized)
+    
+    // ③ 「今日と完全一致するもの」だけを拾う
+    const todayBlocks = normalized
+      .filter((b) => b.date === today)
       .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""))
+    
+    console.log('[TodaySchedule] todayBlocks=', todayBlocks)
     
     return todayBlocks
   }, [externalStudyBlocks])
